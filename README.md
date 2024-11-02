@@ -11,6 +11,7 @@ An _in-progress_ implementation of the [Reticulum Network Stack](https://reticul
 
 - https://reticulum.network
 - https://github.com/markqvist/Reticulum
+- https://github.com/markqvist/Reticulum/wiki/Wire-Packet-Formats
 
 ## License
 
