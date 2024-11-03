@@ -146,6 +146,44 @@ class Identity {
     }
 
     /**
+     * Encrypts information for the identity.
+     * @param data
+     * @returns {Buffer}
+     */
+    encrypt(data) {
+
+        const ephemeralPrivateKeyBytes = Buffer.from(x25519.utils.randomPrivateKey());
+        const ephemeralPublicKeyBytes = Buffer.from(x25519.getPublicKey(ephemeralPrivateKeyBytes));
+
+        // todo ratchets
+        // if ratchet != None:
+        //     target_public_key = X25519PublicKey.from_public_bytes(ratchet)
+        // else:
+        //     target_public_key = self.pub
+
+        const targetPublicKey = this.publicKeyBytes;
+
+        // compute shared key
+        const sharedKey = Buffer.from(x25519.getSharedSecret(ephemeralPrivateKeyBytes, targetPublicKey));
+
+        // create derived key
+        const derivedKey = Cryptography.hkdf(32, sharedKey, this.hash);
+
+        // encrypt plaintext using fernet
+        const fernet = new Fernet(derivedKey);
+        const cipherText = fernet.encrypt(data);
+
+        // create token
+        const token = Buffer.concat([
+            ephemeralPublicKeyBytes,
+            cipherText,
+        ]);
+
+        return token;
+
+    }
+
+    /**
      * Decrypts information for the identity.
      * @param data
      * @returns {Buffer}

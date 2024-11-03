@@ -63,6 +63,8 @@ class Packet {
 
         this.packetHash = null;
 
+        this.destination = null;
+
     }
 
     static fromBytes(bytes) {
@@ -136,21 +138,39 @@ class Packet {
         // pack flags
         const flags = Packet.packFlags(this.context, this.headerType, this.contextFlag, this.transportType, this.destinationType, this.packetType);
 
-        // create raw packet data
-        this.raw = Buffer.concat([
-
-            // standard header
+        // standard header
+        let header = Buffer.concat([
             Packet.uint8ToBytes(flags),
             Packet.uint8ToBytes(hops),
-
-            // announce header
-            this.destinationHash,
-            Buffer.from([this.context]),
-
-            // add plain text announce data
-            this.data,
-
         ]);
+
+        // determine cipher text
+        let ciphertext;
+        if(this.packetType === Packet.ANNOUNCE){
+            // add plaintext announce data
+            ciphertext = this.data;
+        } else {
+            // encrypt all other packets with the destination identity
+            ciphertext = this.destination.encrypt(this.data);
+        }
+
+        // create raw packet data based on header type
+        if(this.headerType === Packet.HEADER_1){
+            this.raw = Buffer.concat([
+                header,
+                this.destinationHash,
+                Buffer.from([this.context]),
+                ciphertext,
+            ]);
+        } else if(this.headerType === Packet.HEADER_2) {
+            this.raw = Buffer.concat([
+                header,
+                this.transportId,
+                this.destinationHash,
+                Buffer.from([this.context]),
+                ciphertext,
+            ]);
+        }
 
         // todo
         // if (this.raw.length > this.MTU) {

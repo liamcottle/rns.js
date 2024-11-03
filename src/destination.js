@@ -76,6 +76,16 @@ class Destination extends EventEmitter {
 
     }
 
+    encrypt(data) {
+
+        // handle single destination type with known identity
+        if(this.type === Destination.SINGLE && this.identity != null){
+            // todo ratchets
+            return this.identity.encrypt(data);
+        }
+
+    }
+
     decrypt(data) {
 
         // todo
@@ -173,6 +183,33 @@ class Destination extends EventEmitter {
         packet.destinationHash = this.hash;
         packet.destinationType = this.type;
         packet.data = announceData;
+
+        // pack packet
+        const raw = packet.pack();
+
+        // send packet to all interfaces
+        this.rns.sendData(raw);
+
+    }
+
+    send(data) {
+
+        // create data packet
+        const packet = new Packet();
+        packet.headerType = Packet.HEADER_1;
+        packet.packetType = Packet.DATA;
+        packet.transportType = Transport.BROADCAST;
+        packet.context = Packet.NONE;
+        packet.contextFlag = Packet.FLAG_UNSET;
+        packet.destination = this;
+        packet.destinationHash = this.hash;
+        packet.destinationType = this.type;
+        packet.data = data;
+
+        // // force using a transport node
+        // packet.headerType = Packet.HEADER_2;
+        // packet.transportType = Transport.TRANSPORT;
+        // packet.transportId = Buffer.from("25ffd99be40b112a3a11294badae6d8f", "hex"); // Windows PC MeshChat
 
         // pack packet
         const raw = packet.pack();
