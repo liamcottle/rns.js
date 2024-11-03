@@ -1,13 +1,13 @@
-const net = require('net');
+const { Socket } = require('net');
 const HDLC = require("../framing/hdlc");
 const KISS = require("../framing/kiss");
 const Packet = require("../packet");
-const Identity = require("../identity");
+const Interface = require("../interfaces/interface");
 
-class TCPClientInterface {
+class TCPClientInterface extends Interface {
 
     constructor(name, host, port, kissFraming = false) {
-        this.name = name;
+        super(name);
         this.host = host;
         this.port = port;
         this.kissFraming = kissFraming;
@@ -16,29 +16,35 @@ class TCPClientInterface {
     connect() {
 
         // create new socket
-        this.client = new net.Socket();
+        this.socket = new Socket();
 
         // handle received data
-        this.client.on('data', (data) => {
-            this.onDataReceived(data);
+        this.socket.on('data', (data) => {
+            this.onSocketDataReceived(data);
         });
 
         // handle errors
-        this.client.on('error', (error) => {
-            this.onError(error);
+        this.socket.on('error', (error) => {
+            this.onSocketError(error);
         });
 
         // connect to server
-        this.client.connect(this.port, this.host, () => {
+        this.socket.connect(this.port, this.host, () => {
             console.log(`Connected to: ${this.name} [${this.host}:${this.port}]`);
         });
 
     }
 
-    disconnect() {
-        this.client.end(() => {
-            console.log(`Disconnected from: ${this.name} [${this.host}:${this.port}]`);
-        });
+    onSocketDataReceived(data) {
+        if(this.kissFraming){
+            this.handleKISSFrame(data);
+        } else {
+            this.handleHDLCFrame(data);
+        }
+    }
+
+    onSocketError(error) {
+        console.error('Connection Error', error);
     }
 
     sendData(data) {
@@ -56,15 +62,7 @@ class TCPClientInterface {
                 Buffer.from([HDLC.FLAG])
             ]);
         }
-        this.client.write(framedData);
-    }
-
-    onDataReceived(data) {
-        if(this.kissFraming){
-            this.handleKISSFrame(data);
-        } else {
-            this.handleHDLCFrame(data);
-        }
+        this.socket.write(framedData);
     }
 
     handleKISSFrame(data) {
@@ -73,12 +71,12 @@ class TCPClientInterface {
         for(let i = 0; i < data.length; i++){
             const byte = data[i];
             if(byte === KISS.FEND){
-                if (frameStart && frameData.length > 0) {
+                if(frameStart && frameData.length > 0){
                     this.processIncoming(KISS.unescape(frameData));
                     frameData = Buffer.alloc(0);
                 }
                 frameStart = true;
-            } else if (frameStart) {
+            } else if(frameStart){
                 frameData = Buffer.concat([frameData, Buffer.from([byte])]);
             }
         }
@@ -112,23 +110,9 @@ class TCPClientInterface {
         // parse packet from bytes
         const packet = Packet.fromBytes(data);
 
-        // handle received announces
-        if(packet.packetType === Packet.ANNOUNCE){
+        // pass to rns
+        this.rns.onPacketReceived(packet, this);
 
-            // todo if announce is for local destination, ignore it
-
-            // handle received announce
-            const validated = Identity.validateAnnounce(packet);
-            console.log({
-                validated,
-            });
-
-        }
-
-    }
-
-    onError(error) {
-        console.error('Connection Error:', error);
     }
 
 }

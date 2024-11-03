@@ -1,8 +1,78 @@
-class Reticulum {
+const EventEmitter = require("./utils/events");
+const Destination = require("./destination");
+const Packet = require("./packet");
+const Announce = require("./announce");
 
-    // length of truncated hashes
-    static TRUNCATED_HASHLENGTH_IN_BITS = 128;
-    static TRUNCATED_HASHLENGTH_IN_BYTES = this.TRUNCATED_HASHLENGTH_IN_BITS / 8;
+class Reticulum extends EventEmitter {
+
+    constructor() {
+        super();
+        this.interfaces = [];
+        this.destinations = [];
+    }
+
+    addInterface(iface) {
+
+        // tell interface which rns instance to use
+        iface.setReticulumInstance(this);
+
+        // add to interfaces list
+        this.interfaces.push(iface);
+
+        // auto connect
+        iface.connect();
+
+    }
+
+    onAnnounce(announce) {
+        this.emit("announce", announce);
+    }
+
+    sendData(data) {
+        for(const iface of this.interfaces){
+            iface.sendData(data);
+        }
+    }
+
+    onPacketReceived(packet, receivingInterface) {
+
+        console.log(packet);
+
+        // handle received announces
+        if(packet.packetType === Packet.ANNOUNCE){
+
+            // todo if announce is for local destination, ignore it
+
+            // handle received announce
+            // const announce = Identity.validateAnnounce(packet);
+            const announce = Announce.fromPacket(packet);
+            if(!announce){
+                return;
+            }
+
+            // pass announce to rns
+            this.onAnnounce({
+                announce: announce,
+                hops: packet.hops,
+                interface_name: receivingInterface.name,
+                interface_hash: receivingInterface.hash,
+            });
+
+        }
+
+    }
+
+    registerDestination(identity, direction, type, appName, ...aspects) {
+
+        // create destination
+        const destination = new Destination(this, identity, direction, type, appName, ...aspects);
+
+        // add to destinations list
+        this.destinations.push(destination);
+
+        return destination;
+
+    }
 
 }
 

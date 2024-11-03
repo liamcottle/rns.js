@@ -1,7 +1,7 @@
-const { ed25519 } = require("@noble/curves/ed25519");
+const { ed25519, x25519 } = require("@noble/curves/ed25519");
 const Cryptography = require("./cryptography");
+const Constants = require("./constants");
 const Packet = require("./packet");
-const Reticulum = require("./reticulum");
 
 class Identity {
 
@@ -20,14 +20,13 @@ class Identity {
     static SIGLENGTH_IN_BITS = this.KEYSIZE_IN_BITS;
     static SIGLENGTH_IN_BYTES = this.SIGLENGTH_IN_BITS / 8;
 
-    static NAME_HASH_LENGTH_IN_BITS = 80;
-    static NAME_HASH_LENGTH_IN_BYTES = this.NAME_HASH_LENGTH_IN_BITS / 8;
-
     constructor() {
 
-        // public keys
+        // keys
         this.publicKeyBytes = null;
+        this.privateKeyBytes = null;
         this.signaturePublicKeyBytes = null;
+        this.signaturePrivateKeyBytes = null;
 
         // hashes
         this.hash = null;
@@ -39,6 +38,35 @@ class Identity {
         const identity = new Identity();
         identity.loadPublicKey(publicKeyBytes);
         return identity;
+    }
+
+    static fromPrivateKey(privateKeyBytes) {
+        const identity = new Identity();
+        identity.loadPrivateKey(privateKeyBytes);
+        return identity;
+    }
+
+    static create() {
+
+        const identity = new Identity();
+
+        // generate public key and private key
+        const privateKeyBytes = x25519.utils.randomPrivateKey();
+        const publicKeyBytes = x25519.getPublicKey(privateKeyBytes);
+        identity.publicKeyBytes = Buffer.from(publicKeyBytes);
+        identity.privateKeyBytes = Buffer.from(privateKeyBytes);
+
+        // generate signature public key and private key
+        const signaturePrivateKeyBytes = ed25519.utils.randomPrivateKey();
+        const signaturePublicKeyBytes = ed25519.getPublicKey(signaturePrivateKeyBytes);
+        identity.signaturePublicKeyBytes = Buffer.from(signaturePublicKeyBytes);
+        identity.signaturePrivateKeyBytes = Buffer.from(signaturePrivateKeyBytes);
+
+        // update hashes
+        identity.updateHashes();
+
+        return identity;
+
     }
 
     /**
@@ -60,6 +88,34 @@ class Identity {
         }
     }
 
+    /**
+     * Load a private key into the instance
+     * @param {Buffer} privateKeyBytes - The public key as bytes.
+     * @returns {boolean} True if the key was loaded, otherwise False.
+     */
+    loadPrivateKey(privateKeyBytes) {
+        try {
+
+            // private key bytes contains 2 keys
+            const data = Array.from(privateKeyBytes);
+            this.privateKeyBytes = Buffer.from(data.splice(0, Identity.KEYSIZE_IN_BYTES / 2));
+            this.signaturePrivateKeyBytes = Buffer.from(data.splice(0, Identity.KEYSIZE_IN_BYTES / 2));
+
+            // load public keys
+            this.publicKeyBytes = Buffer.from(x25519.getPublicKey(this.privateKeyBytes));
+            this.signaturePublicKeyBytes = Buffer.from(ed25519.getPublicKey(this.signaturePrivateKeyBytes));
+
+            // update hashes
+            this.updateHashes();
+
+            return true;
+
+        } catch(e) {
+            console.log("Error while loading private key, the contained exception was", e);
+            return false;
+        }
+    }
+
     getPublicKey() {
         return Buffer.concat([
             this.publicKeyBytes,
@@ -67,8 +123,15 @@ class Identity {
         ]);
     }
 
+    getPrivateKey() {
+        return Buffer.concat([
+            this.privateKeyBytes,
+            this.signaturePrivateKeyBytes,
+        ]);
+    }
+
     updateHashes() {
-        this.hash = Identity.truncatedHash(this.getPublicKey())
+        this.hash = Cryptography.truncatedHash(this.getPublicKey())
         this.hexhash = this.hash.toString("hex");
     }
 
@@ -77,22 +140,8 @@ class Identity {
         return ed25519.verify(signature, data, this.signaturePublicKeyBytes);
     }
 
-    /**
-     * Get a SHA-256 hash of passed data.
-     * @param data
-     * @returns {Buffer}
-     */
-    static fullHash(data) {
-        return Cryptography.sha256(data);
-    }
-
-    /**
-     * Get a truncated SHA-256 hash of passed data.
-     * @param data
-     * @returns {Buffer}
-     */
-    static truncatedHash(data) {
-        return this.fullHash(data).slice(0, Reticulum.TRUNCATED_HASHLENGTH_IN_BYTES);
+    sign(data) {
+        return Buffer.from(ed25519.sign(data, this.signaturePrivateKeyBytes));
     }
 
     static validateAnnounce(packet, onlyValidateSignature = false) {
@@ -105,7 +154,7 @@ class Identity {
         // read data from packet
         const data = Array.from(packet.data);
         const publicKey = Buffer.from(data.splice(0, this.KEYSIZE_IN_BYTES));
-        const nameHash = Buffer.from(data.splice(0, this.NAME_HASH_LENGTH_IN_BYTES));
+        const nameHash = Buffer.from(data.splice(0, Constants.IDENTITY_NAME_HASH_LENGTH_IN_BYTES));
         const randomHash = Buffer.from(data.splice(0, 10)); // 5 bytes random, 5 bytes time
 
         // read ratchet bytes if context flag is set
@@ -144,7 +193,7 @@ class Identity {
 
         // get hash material and expected hash
         const hashMaterial = Buffer.concat([nameHash, announcedIdentity.hash]);
-        const expectedHash = Identity.fullHash(hashMaterial).slice(0, Reticulum.TRUNCATED_HASHLENGTH_IN_BYTES);
+        const expectedHash = Cryptography.fullHash(hashMaterial).slice(0, Constants.TRUNCATED_HASHLENGTH_IN_BYTES);
 
         // check if destination hash matches expected hash
         if(!packet.destinationHash.equals(expectedHash)){
