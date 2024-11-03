@@ -33,6 +33,9 @@ destination.on("packet", (event) => {
     const lxmfMessage = LXMessage.fromBytes(event.data);
     console.log(lxmfMessage);
 
+    // prove that the packet was received
+    event.packet.prove();
+
 });
 
 // setTimeout(() => {

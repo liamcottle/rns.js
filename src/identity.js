@@ -3,6 +3,8 @@ const Cryptography = require("./cryptography");
 const Constants = require("./constants");
 const Packet = require("./packet");
 const Fernet = require("./fernet");
+const Transport = require("./transport");
+const Destination = require("./destination");
 
 class Identity {
 
@@ -293,6 +295,47 @@ class Identity {
         //
 
         return true;
+
+    }
+
+    prove(packetToProve) {
+
+        // sign the hash of the packet to prove
+        const signature = this.sign(packetToProve.packetHash);
+
+        // determine if we should use implicit or explicit proof
+        let proofData;
+        if(packetToProve.destination.rns.shouldUseImplicitProof){
+            proofData = signature;
+        } else {
+            proofData = Buffer.concat([
+                packetToProve.packetHash,
+                signature,
+            ]);
+        }
+
+        // todo attached interface
+        // todo reverse path table
+
+        // create data packet
+        const packet = new Packet();
+        packet.hops = packetToProve.hops;
+        packet.headerType = Packet.HEADER_1;
+        packet.packetType = Packet.PROOF;
+        packet.transportType = Transport.BROADCAST;
+        packet.context = Packet.NONE;
+        packet.contextFlag = Packet.FLAG_UNSET;
+        packet.destination = null;
+        packet.destinationHash = packetToProve.packetHash.slice(Constants.TRUNCATED_HASHLENGTH_IN_BYTES);
+        packet.destinationType = Destination.SINGLE;
+        packet.data = proofData;
+
+        // pack packet
+        const raw = packet.pack();
+
+        // fixme: only send to receiving interface, and to reverse path table
+        // send packet to all interfaces
+        packetToProve.destination.rns.sendData(raw);
 
     }
 

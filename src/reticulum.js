@@ -7,6 +7,7 @@ class Reticulum extends EventEmitter {
 
     constructor() {
         super();
+        this.shouldUseImplicitProof = true;
         this.interfaces = [];
         this.destinations = [];
     }

@@ -12,7 +12,7 @@ class Packet {
     static DATA = 0x00; // Data packets
     static ANNOUNCE = 0x01; // # Announces
     // static LINKREQUEST = 0x02; // Link requests
-    // static PROOF = 0x03; // Proofs
+    static PROOF = 0x03; // Proofs
     // static PACKET_TYPES = [this.DATA, this.ANNOUNCE, this.LINKREQUEST, this.PROOF];
 
     // Packet context types
@@ -133,7 +133,7 @@ class Packet {
     pack() {
 
         // set hop count
-        const hops = 0;
+        const hops = this.hops ?? 0;
 
         // pack flags
         const flags = Packet.packFlags(this.context, this.headerType, this.contextFlag, this.transportType, this.destinationType, this.packetType);
@@ -148,6 +148,11 @@ class Packet {
         let ciphertext;
         if(this.packetType === Packet.ANNOUNCE){
             // add plaintext announce data
+            ciphertext = this.data;
+        } else if(this.packetType === Packet.PROOF && this.context === Packet.NONE){
+            // add plaintext proof data
+            // proof packet data is not encrypted
+            // https://github.com/markqvist/Reticulum/blob/d002a75f348f69301f94e07abe1eb830649b329f/RNS/Packet.py#L377
             ciphertext = this.data;
         } else {
             // encrypt all other packets with the destination identity
@@ -208,6 +213,12 @@ class Packet {
 
         return hashablePart;
 
+    }
+
+    prove() {
+        if(this.destination){
+            this.destination.identity.prove(this);
+        }
     }
 
 }

@@ -107,6 +107,9 @@ class Destination extends EventEmitter {
 
         const plaintext = this.decrypt(packet.data);
 
+        // set destination on packet so prove will have access to it
+        packet.destination = this;
+
         this.emit("packet", {
             packet: packet,
             data: plaintext,
