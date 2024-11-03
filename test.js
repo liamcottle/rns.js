@@ -23,7 +23,7 @@ rns.on("announce", (data) => {
 const identity = Identity.fromPrivateKey(Buffer.from("9339cfce1fc75d4db4697cada620bb229de8a2164287c9302dbce840f38af39452f63722ef745fcef7bb3f90984b80c43a77ad1ff11127b88035b4ae4e670eaa", "hex"));
 
 // create a destination
-const destination = rns.registerDestination(identity, Destination.OUT, Destination.SINGLE, "lxmf", "delivery");
+const destination = rns.registerDestination(identity, Destination.IN, Destination.SINGLE, "lxmf", "delivery");
 
 // listen for opportunistic lxmf packets
 destination.on("packet", (event) => {
