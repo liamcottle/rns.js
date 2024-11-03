@@ -2,6 +2,7 @@ const Reticulum = require("./src/reticulum");
 const TCPClientInterface = require("./src/interfaces/tcp_client_interface");
 const Identity = require("./src/identity");
 const Destination = require("./src/destination");
+const LXMessage = require("./src/lxmf_message");
 
 // create rns instance
 const rns = new Reticulum();
@@ -23,6 +24,15 @@ const identity = Identity.fromPrivateKey(Buffer.from("9339cfce1fc75d4db4697cada6
 
 // create a destination
 const destination = rns.registerDestination(identity, Destination.OUT, Destination.SINGLE, "lxmf", "delivery");
+
+// listen for opportunistic lxmf packets
+destination.on("packet", (event) => {
+
+    // parse and log lxmf message
+    const lxmfMessage = LXMessage.fromBytes(event.data);
+    console.log(lxmfMessage);
+
+});
 
 setTimeout(() => {
     destination.announce(Buffer.from("@liamcottle/rns.js"));

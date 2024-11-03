@@ -9,6 +9,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@noble/curves": "^1.6.0"
+    "@noble/curves": "^1.6.0",
+    "msgpackr": "^1.11.2"
   }
 }

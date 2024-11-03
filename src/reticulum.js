@@ -36,8 +36,6 @@ class Reticulum extends EventEmitter {
 
     onPacketReceived(packet, receivingInterface) {
 
-        console.log(packet);
-
         // handle received announces
         if(packet.packetType === Packet.ANNOUNCE){
 
@@ -57,6 +55,15 @@ class Reticulum extends EventEmitter {
                 interface_name: receivingInterface.name,
                 interface_hash: receivingInterface.hash,
             });
+
+        } else if(packet.packetType === Packet.DATA) {
+
+            // pass data packets to their intended destination
+            for(const destination of this.destinations){
+                if(destination.hash.equals(packet.destinationHash)){
+                    destination.onPacket(packet);
+                }
+            }
 
         }
 

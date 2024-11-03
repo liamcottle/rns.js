@@ -2,8 +2,9 @@ const Cryptography = require("./cryptography");
 const Constants = require("./constants");
 const Packet = require("./packet");
 const Transport = require("./transport");
+const EventEmitter = require("./utils/events");
 
-class Destination {
+class Destination extends EventEmitter {
 
     // // constants
     static SINGLE = 0x00;
@@ -18,6 +19,8 @@ class Destination {
     static DIRECTIONS = [this.IN, this.OUT];
 
     constructor(reticulum, identity, direction, type, appName, ...aspects) {
+
+        super();
 
         this.rns = reticulum;
         this.identity = identity;
@@ -70,6 +73,34 @@ class Destination {
         }
 
         return Cryptography.fullHash(addrHashMaterial).slice(0, Constants.TRUNCATED_HASHLENGTH_IN_BYTES);
+
+    }
+
+    decrypt(data) {
+
+        // todo
+        // if(this.type === Destination.PLAIN){
+        //     return data;
+        // }
+
+        // handle single destination type with known identity
+        if(this.type === Destination.SINGLE && this.identity != null){
+            // todo ratchets
+            return this.identity.decrypt(data);
+        }
+
+        throw new Error("Not Implemented");
+
+    }
+
+    onPacket(packet) {
+
+        const plaintext = this.decrypt(packet.data);
+
+        this.emit("packet", {
+            packet: packet,
+            data: plaintext,
+        });
 
     }
 

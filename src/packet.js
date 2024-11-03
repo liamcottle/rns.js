@@ -9,7 +9,7 @@ class Packet {
     // static HEADER_TYPES = [this.HEADER_1, this.HEADER_2];
 
     // packet types
-    // static DATA = 0x00; // Data packets
+    static DATA = 0x00; // Data packets
     static ANNOUNCE = 0x01; // # Announces
     // static LINKREQUEST = 0x02; // Link requests
     // static PROOF = 0x03; // Proofs

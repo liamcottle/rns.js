@@ -2,6 +2,7 @@ const { ed25519, x25519 } = require("@noble/curves/ed25519");
 const Cryptography = require("./cryptography");
 const Constants = require("./constants");
 const Packet = require("./packet");
+const Fernet = require("./fernet");
 
 class Identity {
 
@@ -142,6 +143,29 @@ class Identity {
 
     sign(data) {
         return Buffer.from(ed25519.sign(data, this.signaturePrivateKeyBytes));
+    }
+
+    /**
+     * Decrypts information for the identity.
+     * @param data
+     * @returns {Buffer}
+     */
+    decrypt(data) {
+
+        // parse peer public key and cipher text
+        const peerPublicKeyBytes = data.slice(0, Identity.KEYSIZE_IN_BYTES / 2);
+        const cipherText = data.slice(Identity.KEYSIZE_IN_BYTES / 2);
+
+        // compute shared key
+        const sharedKey = Buffer.from(x25519.getSharedSecret(this.privateKeyBytes, peerPublicKeyBytes));
+
+        // create derived key
+        const derivedKey = Cryptography.hkdf(32, sharedKey, this.hash);
+
+        // decrypt ciphertext using fernet
+        const fernet = new Fernet(derivedKey);
+        return fernet.decrypt(cipherText);
+
     }
 
     static validateAnnounce(packet, onlyValidateSignature = false) {
