@@ -12,6 +12,7 @@ An _in-progress_ implementation of the [Reticulum Network Stack](https://reticul
 - https://reticulum.network
 - https://github.com/markqvist/Reticulum
 - https://github.com/markqvist/Reticulum/wiki/Wire-Packet-Formats
+- https://gist.github.com/liamcottle/e85953bccd6a4f8b436ac4284b29af49
 
 ## License
 
