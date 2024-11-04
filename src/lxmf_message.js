@@ -1,7 +1,4 @@
-const {
-    pack: msgpack,
-    unpack: msgunpack,
-} = require('msgpackr');
+const { Packr } = require('msgpackr');
 const Cryptography = require("./cryptography");
 
 class LXMessage {
@@ -15,6 +12,16 @@ class LXMessage {
         this.fields = null;
     }
 
+    static packer() {
+        return new Packr({
+            // we must disable conversion to javascript maps to avoid integer keys being converted to strings by js
+            // using a Map instead of a JS object allows us to preserve sending an integer based key
+            // this is needed otherwise msgunpack in LXMF router will use a string key, and looking up by integer key
+            // will mean this field will not be found, even though it exists...
+            mapsAsObjects: false,
+        });
+    }
+
     static fromBytes(data) {
         try {
 
@@ -26,7 +33,7 @@ class LXMessage {
             // todo validate signature
 
             // unpack msgpack payload
-            const unpacked = msgunpack(packedPayload);
+            const unpacked = LXMessage.packer().unpack(packedPayload);
             const timestamp = unpacked[0];
             const title = unpacked[1].toString();
             const content = unpacked[2].toString();
@@ -42,11 +49,17 @@ class LXMessage {
             return lxmfMessage;
 
         } catch(e) {
+            console.log("failed to parse lxmf message from bytes", e);
             return null;
         }
     }
 
     pack(identity) {
+
+        // ensure fields is a Map, otherwise keys get converted from int to string...
+        if(!(this.fields instanceof Map)){
+            throw new Error("fields must be a Map instance");
+        }
 
         // get current timestamp in seconds as float
         const timestampInSecondsAsFloat = Date.now() / 1000;
@@ -56,7 +69,7 @@ class LXMessage {
         const contentBytes = Buffer.from(this.content);
 
         // msgpack the payload
-        const packedPayload = msgpack([
+        const packedPayload = LXMessage.packer().pack([
             timestampInSecondsAsFloat,
             titleBytes,
             contentBytes,
