@@ -13,6 +13,15 @@ An _in-progress_ implementation of the [Reticulum Network Stack](https://reticul
 - [x] Send outbound packets to a Destination
 - [x] Send and receive opportunistic LXMF messages over single packets
 
+## TODO
+
+- [ ] Validate LXMF message signatures
+- [ ] Support RNS Links
+- [ ] Only send packets to relevant interface. Currently sends to all interfaces
+- [ ] Support direct LXMF messages over Links
+- [ ] Implement rate limits
+- [ ] Support being a Transport node
+
 ## References
 
 - https://reticulum.network
