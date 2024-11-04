@@ -54,7 +54,7 @@ class LXMessage {
         }
     }
 
-    pack(identity) {
+    pack(identity, opportunistic = true) {
 
         // ensure fields is a Map, otherwise keys get converted from int to string...
         if(!(this.fields instanceof Map)){
@@ -97,7 +97,7 @@ class LXMessage {
 
         // packed
         const packed = Buffer.concat([
-            // this.destinationHash, // self.__destination.hash (opportunistic lxmf messages dont send destination in packed data?)
+            opportunistic ? Buffer.alloc(0) : this.destinationHash, // opportunistic lxmf messages dont send destination in packed data
             this.sourceHash,
             signature,
             packedPayload,

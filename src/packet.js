@@ -11,7 +11,7 @@ class Packet {
     // packet types
     static DATA = 0x00; // Data packets
     static ANNOUNCE = 0x01; // # Announces
-    // static LINKREQUEST = 0x02; // Link requests
+    static LINKREQUEST = 0x02; // Link requests
     static PROOF = 0x03; // Proofs
     // static PACKET_TYPES = [this.DATA, this.ANNOUNCE, this.LINKREQUEST, this.PROOF];
 
@@ -35,7 +35,7 @@ class Packet {
     // static LINKIDENTIFY   = 0xFB; // Packet is a link peer identification proof
     // static LINKCLOSE      = 0xFC; // Packet is a link close message
     // static LINKPROOF      = 0xFD; // Packet is a link packet proof
-    // static LRRTT          = 0xFE; // Packet is a link request round-trip time measurement
+    static LRRTT          = 0xFE; // Packet is a link request round-trip time measurement
     static LRPROOF        = 0xFF; // Packet is a link request proof
 
     // context flag values
@@ -88,16 +88,14 @@ class Packet {
         if(packet.headerType === Packet.HEADER_2){
             packet.transportId = bytes.slice(2, Packet.DESTINATION_HASH_LENGTH + 2); // [2:DST_LEN+2]
             packet.destinationHash = bytes.slice(Packet.DESTINATION_HASH_LENGTH + 2, 2 * Packet.DESTINATION_HASH_LENGTH + 2); // [DST_LEN+2:2*DST_LEN+2]
-            // fixme: context ord?
-            // const context = this.ord(raw.slice(2*DST_LEN+2, 2*DST_LEN+3)); // [2*DST_LEN+2:2*DST_LEN+3])
-            packet.context = bytes.slice(2 * Packet.DESTINATION_HASH_LENGTH + 2, 2 * Packet.DESTINATION_HASH_LENGTH + 3); // [2*DST_LEN+2:2*DST_LEN+3])
+            // context is single byte
+            packet.context = bytes.slice(2 * Packet.DESTINATION_HASH_LENGTH + 2, 2 * Packet.DESTINATION_HASH_LENGTH + 3)[0]; // [2*DST_LEN+2:2*DST_LEN+3])
             packet.data = bytes.slice(2 * Packet.DESTINATION_HASH_LENGTH + 3); // [2*DST_LEN+3:]
         } else {
             packet.transportId = null;
             packet.destinationHash = bytes.slice(2, Packet.DESTINATION_HASH_LENGTH + 2); // [2:DST_LEN+2]
-            // fixme: context ord?
-            // const context = this.ord(raw.slice(DST_LEN+2, DST_LEN+3)); // [DST_LEN+2:DST_LEN+3])
-            packet.context = bytes.slice(Packet.DESTINATION_HASH_LENGTH + 2, Packet.DESTINATION_HASH_LENGTH + 3); // [DST_LEN+2:DST_LEN+3])
+            // context is single byte
+            packet.context = bytes.slice(Packet.DESTINATION_HASH_LENGTH + 2, Packet.DESTINATION_HASH_LENGTH + 3)[0]; // [DST_LEN+2:DST_LEN+3])
             packet.data = bytes.slice(Packet.DESTINATION_HASH_LENGTH + 3); // [DST_LEN+3:]
         }
 
@@ -147,12 +145,15 @@ class Packet {
         // determine cipher text
         let ciphertext;
         if(this.packetType === Packet.ANNOUNCE){
-            // add plaintext announce data
+            // announce packets are not encrypted
             ciphertext = this.data;
         } else if(this.packetType === Packet.PROOF && this.context === Packet.NONE){
             // add plaintext proof data
             // proof packet data is not encrypted
             // https://github.com/markqvist/Reticulum/blob/d002a75f348f69301f94e07abe1eb830649b329f/RNS/Packet.py#L377
+            ciphertext = this.data;
+        } else if(this.packetType === Packet.LINKREQUEST){
+            // link request packets are not encrypted
             ciphertext = this.data;
         } else {
             // encrypt all other packets with the destination identity
@@ -190,8 +191,11 @@ class Packet {
     }
 
     getHash() {
-        // return Identity.fullHash(this.getHashablePart());
-        return Cryptography.sha256(this.getHashablePart());
+        return Cryptography.fullHash(this.getHashablePart());
+    }
+
+    getTruncatedHash() {
+        return Cryptography.truncatedHash(this.getHashablePart());
     }
 
     updateHash() {
