@@ -4,8 +4,14 @@ An _in-progress_ implementation of the [Reticulum Network Stack](https://reticul
 
 ## What can it do?
 
-- [x] Connect with a `TCPClientInterface`
-- [x] Validate incoming announces
+- [x] Create a new Identity
+- [x] Load an existing Identity from Public Keys or Private Keys
+- [x] Connect with a `TCPClientInterface` to an existing RNS `TCPServerInterface`
+- [x] Listen for incoming announces
+- [x] Register a Destination
+- [x] Listen for inbound packets to a Destination
+- [x] Send outbound packets to a Destination
+- [x] Send and receive opportunistic LXMF messages over single packets
 
 ## References
 
