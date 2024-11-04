@@ -22,11 +22,13 @@ You should probably look at the official reference stack written in Python;
 - [x] Listen for inbound packets to a Destination
 - [x] Send outbound packets to a Destination
 - [x] Send and receive opportunistic LXMF messages over single packets
+- [x] Create outbound Links to a Destination
+- [x] Send and receive data packets over an established Link
 
 ## TODO
 
+- [ ] Support inbound RNS Links
 - [ ] Validate LXMF message signatures
-- [ ] Support RNS Links
 - [ ] Only send packets to relevant interface. Currently sends to all interfaces
 - [ ] Support direct LXMF messages over Links
 - [ ] Implement rate limits
