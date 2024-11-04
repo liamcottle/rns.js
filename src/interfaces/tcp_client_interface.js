@@ -28,6 +28,11 @@ class TCPClientInterface extends Interface {
             this.onSocketError(error);
         });
 
+        // handle socket close
+        this.socket.on('close', (error) => {
+            this.onSocketClose(error);
+        });
+
         // connect to server
         this.socket.connect(this.port, this.host, () => {
             console.log(`Connected to: ${this.name} [${this.host}:${this.port}]`);
@@ -45,6 +50,17 @@ class TCPClientInterface extends Interface {
 
     onSocketError(error) {
         console.error('Connection Error', error);
+    }
+
+    onSocketClose() {
+
+        console.error('Connection Closed');
+
+        // auto reconnect
+        setTimeout(() => {
+            this.connect();
+        }, 1000);
+
     }
 
     sendData(data) {
