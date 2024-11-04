@@ -2,11 +2,11 @@
 
 An _in-progress_, implementation of the [Reticulum Network Stack](https://reticulum.network/) written in Javascript.
 
-> This implementation is extremely limited, and is probably not what you should be using.
-> 
-> I am implementing this to learn the RNS stack at the protocol level, while writing it in a language I am very familiar with.
-> 
-> At this stage, I will only be working on the features I want to use, rather than building a complete alternative transport stack.
+This implementation is extremely limited, and is probably not what you should be using.
+
+I am implementing this to learn the RNS stack at the protocol level, while writing it in a language I am very familiar with.
+
+At this stage, I will only be working on the features I want to use, rather than building a complete alternative transport stack.
 
 You should probably look at the official reference stack written in Python;
 
