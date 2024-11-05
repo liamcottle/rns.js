@@ -38,8 +38,10 @@ There's a few scripts in the [examples](./examples) folder for reference on what
 - [ ] Implement Link heartbeat packets
 - [ ] Validate LXMF message signatures
 - [ ] Only send packets to relevant interface. Some packets still send to all interfaces
+- [ ] Implement Ratchets
 - [ ] Implement Resources over Links
 - [ ] Support LXMF messages over Link Resources
+- [ ] Support LXMF stamps and tickets
 - [ ] Implement rate limits
 - [ ] Support being a Transport node
 
