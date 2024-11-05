@@ -14,4 +14,4 @@ class PKCS7 {
 
 }
 
-module.exports = PKCS7;
+export default PKCS7;

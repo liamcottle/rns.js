@@ -1,4 +1,4 @@
-const Cryptography = require("../cryptography");
+import Cryptography from "../cryptography.js";
 
 class Interface {
 
@@ -18,4 +18,4 @@ class Interface {
 
 }
 
-module.exports = Interface;
+export default Interface;

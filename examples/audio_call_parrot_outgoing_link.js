@@ -1,8 +1,10 @@
-const Reticulum = require("../src/reticulum");
-const TCPClientInterface = require("../src/interfaces/tcp_client_interface");
-const Identity = require("../src/identity");
-const Destination = require("../src/destination");
-const Link = require("../src/link");
+import {
+    Reticulum,
+    Destination,
+    Identity,
+    Link,
+    TCPClientInterface,
+} from "../src/reticulum.js";
 
 // create rns instance
 const rns = new Reticulum();

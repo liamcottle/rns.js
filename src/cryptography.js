@@ -1,5 +1,5 @@
-const crypto = require("crypto");
-const Constants = require("./constants");
+import crypto from "crypto";
+import Constants from "./constants.js";
 
 class Cryptography {
 
@@ -72,4 +72,4 @@ class Cryptography {
 
 }
 
-module.exports = Cryptography;
+export default Cryptography;

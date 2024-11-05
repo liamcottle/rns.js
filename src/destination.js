@@ -1,8 +1,9 @@
-const Cryptography = require("./cryptography");
-const Constants = require("./constants");
-const Packet = require("./packet");
-const Transport = require("./transport");
-const EventEmitter = require("./utils/events");
+import EventEmitter from "./utils/events.js";
+import Constants from "./constants.js";
+import Cryptography from "./cryptography.js";
+import Packet from "./packet.js";
+import Transport from "./transport.js";
+import Identity from "./identity.js";
 
 /**
  * Events emitted by a Destination
@@ -39,7 +40,7 @@ class Destination extends EventEmitter {
 
         // generate the destination address hash
         this.hash = Destination.hash(this.identity, this.appName, ...aspects);
-        this.nameHash = Cryptography.fullHash(nameWithoutIdentity).slice(0, Constants.IDENTITY_NAME_HASH_LENGTH_IN_BYTES);
+        this.nameHash = Cryptography.fullHash(nameWithoutIdentity).slice(0, Identity.NAME_HASH_LENGTH_IN_BYTES);
         this.hexhash = this.hash.toString("hex");
 
     }
@@ -70,7 +71,7 @@ class Destination extends EventEmitter {
     static hash(identity, appName, ...aspects) {
 
         const fullName = Destination.expandName(null, appName, ...aspects);
-        const nameHash = Cryptography.fullHash(fullName).slice(0, Constants.IDENTITY_NAME_HASH_LENGTH_IN_BYTES);
+        const nameHash = Cryptography.fullHash(fullName).slice(0, Identity.NAME_HASH_LENGTH_IN_BYTES);
 
         let addrHashMaterial = nameHash;
         if(identity != null){
@@ -256,4 +257,4 @@ class Destination extends EventEmitter {
 
 }
 
-module.exports = Destination;
+export default Destination;

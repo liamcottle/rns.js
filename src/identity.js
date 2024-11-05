@@ -1,10 +1,11 @@
-const { ed25519, x25519 } = require("@noble/curves/ed25519");
-const Cryptography = require("./cryptography");
-const Constants = require("./constants");
-const Packet = require("./packet");
-const Fernet = require("./fernet");
-const Transport = require("./transport");
-const Destination = require("./destination");
+import { ed25519, x25519 } from "@noble/curves/ed25519";
+
+import Constants from "./constants.js";
+import Destination from "./destination.js";
+import Cryptography from "./cryptography.js";
+import Packet from "./packet.js";
+import Transport from "./transport.js";
+import Fernet from "./fernet.js";
 
 class Identity {
 
@@ -15,6 +16,10 @@ class Identity {
     // X.25519 ratchet key size in bits.
     static RATCHETSIZE_IN_BITS = 256;
     static RATCHETSIZE_IN_BYTES = this.RATCHETSIZE_IN_BITS / 8;
+
+    // length of identity name hashes
+    static NAME_HASH_LENGTH_IN_BITS = 80;
+    static NAME_HASH_LENGTH_IN_BYTES = this.NAME_HASH_LENGTH_IN_BITS / 8;
 
     // Non-configurable constants
     // static FERNET_OVERHEAD           = RNS.Cryptography.Fernet.FERNET_OVERHEAD
@@ -217,8 +222,8 @@ class Identity {
 
         // read data from packet
         const data = Array.from(packet.data);
-        const publicKey = Buffer.from(data.splice(0, this.KEYSIZE_IN_BYTES));
-        const nameHash = Buffer.from(data.splice(0, Constants.IDENTITY_NAME_HASH_LENGTH_IN_BYTES));
+        const publicKey = Buffer.from(data.splice(0, Identity.KEYSIZE_IN_BYTES));
+        const nameHash = Buffer.from(data.splice(0, Identity.NAME_HASH_LENGTH_IN_BYTES));
         const randomHash = Buffer.from(data.splice(0, 10)); // 5 bytes random, 5 bytes time
 
         // read ratchet bytes if context flag is set
@@ -341,4 +346,4 @@ class Identity {
 
 }
 
-module.exports = Identity;
+export default Identity;

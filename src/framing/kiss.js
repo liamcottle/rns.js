@@ -48,4 +48,4 @@ class KISS {
 
 }
 
-module.exports = KISS;
+export default KISS;

@@ -1,7 +1,9 @@
-const Reticulum = require("../src/reticulum");
-const TCPClientInterface = require("../src/interfaces/tcp_client_interface");
-const Identity = require("../src/identity");
-const Destination = require("../src/destination");
+import {
+    Reticulum,
+    Destination,
+    Identity,
+    TCPClientInterface,
+} from "../src/reticulum.js";
 
 // create rns instance
 const rns = new Reticulum();
@@ -25,6 +27,7 @@ rns.on("announce", (data) => {
 
 // anounce self
 setTimeout(() => {
+    console.log(`announcing ${audioCallDestination.hash.toString("hex")}`);
     audioCallDestination.announce(Buffer.from("@liamcottle/rns.js"));
 }, 2000);
 

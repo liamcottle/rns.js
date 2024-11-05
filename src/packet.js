@@ -1,5 +1,5 @@
-const Constants = require("./constants");
-const Cryptography = require("./cryptography");
+import Constants from "./constants.js";
+import Cryptography from "./cryptography.js";
 
 class Packet {
 
@@ -236,4 +236,4 @@ class Packet {
 
 }
 
-module.exports = Packet;
+export default Packet;

@@ -1,6 +1,5 @@
-const Packet = require("./packet");
-const Identity = require("./identity");
-const Constants = require("./constants");
+import Identity from "./identity.js";
+import Packet from "./packet.js";
 
 class Announce {
 
@@ -21,7 +20,7 @@ class Announce {
             // read data from packet
             const data = Array.from(packet.data);
             const publicKey = Buffer.from(data.splice(0, Identity.KEYSIZE_IN_BYTES));
-            const nameHash = Buffer.from(data.splice(0, Constants.IDENTITY_NAME_HASH_LENGTH_IN_BYTES));
+            const nameHash = Buffer.from(data.splice(0, Identity.NAME_HASH_LENGTH_IN_BYTES));
             const randomHash = Buffer.from(data.splice(0, 10)); // 5 bytes random, 5 bytes time
 
             // read ratchet bytes if context flag is set
@@ -66,4 +65,4 @@ class Announce {
 
 }
 
-module.exports = Announce;
+export default Announce;

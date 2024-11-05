@@ -42,4 +42,4 @@ class HDLC {
 
 }
 
-module.exports = HDLC;
+export default HDLC;

@@ -1,9 +1,11 @@
-const EventEmitter = require("./utils/events");
-const Destination = require("./destination");
-const Packet = require("./packet");
-const Announce = require("./announce");
-const Identity = require("./identity");
-const Link = require("./link");
+import EventEmitter from "./utils/events.js";
+import Announce from "./announce.js";
+import Destination from "./destination.js";
+import Identity from "./identity.js";
+import Link from "./link.js";
+import Packet from "./packet.js";
+import TCPClientInterface from "./interfaces/tcp_client_interface.js";
+import LXMessage from "./lxmf_message.js";
 
 class Reticulum extends EventEmitter {
 
@@ -159,4 +161,12 @@ class Reticulum extends EventEmitter {
 
 }
 
-module.exports = Reticulum;
+export {
+    Reticulum,
+    Destination,
+    Identity,
+    Link,
+    Packet,
+    TCPClientInterface,
+    LXMessage,
+};

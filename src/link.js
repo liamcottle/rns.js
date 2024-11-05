@@ -1,15 +1,13 @@
-const { ed25519, x25519 } = require("@noble/curves/ed25519");
-const {
-    pack: msgpack,
-    unpack: unmsgpack,
-} = require('msgpackr');
-const Packet = require("./packet");
-const Transport = require("./transport");
-const Identity = require("./identity");
-const Cryptography = require("./cryptography");
-const Destination = require("./destination");
-const Fernet = require("./fernet");
-const EventEmitter = require("./utils/events");
+import { ed25519, x25519 } from "@noble/curves/ed25519";
+import EventEmitter from "./utils/events.js";
+
+import Destination from "./destination.js";
+import Cryptography from "./cryptography.js";
+import Packet from "./packet.js";
+import Transport from "./transport.js";
+import Fernet from "./fernet.js";
+import Identity from "./identity.js";
+import MsgPack from "./msgpack.js";
 
 /**
  * Events emitted by a Link
@@ -216,7 +214,7 @@ class Link extends EventEmitter {
             console.log(`Link ${this.hash.toString("hex")} established with ${this.destination.hash.toString("hex")}, RTT is ${this.rtt}ms`);
 
             // send rtt packet
-            const rttData = msgpack(this.rtt / 1000);
+            const rttData = MsgPack.pack(this.rtt / 1000);
 
             // create data packet
             const rttPacket = new Packet();
@@ -394,7 +392,7 @@ class Link extends EventEmitter {
         }
 
         // unpack data
-        const rtt = unmsgpack(plaintext);
+        const rtt = MsgPack.unpack(plaintext);
 
         // update link rtt with the slowest of the two rtt values
         this.rtt = Math.max(this.measuredRtt, rtt);
@@ -441,4 +439,4 @@ class Link extends EventEmitter {
 
 }
 
-module.exports = Link;
+export default Link;

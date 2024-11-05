@@ -1,8 +1,8 @@
-const { Socket } = require('net');
-const HDLC = require("../framing/hdlc");
-const KISS = require("../framing/kiss");
-const Packet = require("../packet");
-const Interface = require("../interfaces/interface");
+import { Socket } from "net";
+import HDLC from "../framing/hdlc.js";
+import KISS from "../framing/kiss.js";
+import Packet from "../packet.js";
+import Interface from "./interface.js";
 
 class TCPClientInterface extends Interface {
 
@@ -133,4 +133,4 @@ class TCPClientInterface extends Interface {
 
 }
 
-module.exports = TCPClientInterface;
+export default TCPClientInterface;

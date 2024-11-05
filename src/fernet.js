@@ -1,5 +1,5 @@
-const crypto = require("crypto");
-const PKCS7 = require("./pkcs7");
+import crypto from "crypto";
+import PKCS7 from "./pkcs7.js";
 
 class Fernet {
 
@@ -84,4 +84,4 @@ class Fernet {
 
 }
 
-module.exports = Fernet;
+export default Fernet;

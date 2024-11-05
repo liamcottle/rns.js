@@ -9,4 +9,4 @@ class Transport {
 
 }
 
-module.exports = Transport;
+export default Transport;
