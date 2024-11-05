@@ -29,31 +29,39 @@ class Identity {
     static SIGLENGTH_IN_BYTES = this.SIGLENGTH_IN_BITS / 8;
 
     constructor() {
-
-        // keys
+        this.hash = null;
         this.publicKeyBytes = null;
         this.privateKeyBytes = null;
         this.signaturePublicKeyBytes = null;
         this.signaturePrivateKeyBytes = null;
-
-        // hashes
-        this.hash = null;
-        this.hexhash = null;
-
     }
 
+    /**
+     * Load an Identity from the provided Public Key.
+     * @param publicKeyBytes
+     * @returns {Identity}
+     */
     static fromPublicKey(publicKeyBytes) {
         const identity = new Identity();
         identity.loadPublicKey(publicKeyBytes);
         return identity;
     }
 
+    /**
+     * Load an Identity from the provided Private Key.
+     * @param privateKeyBytes
+     * @returns {Identity}
+     */
     static fromPrivateKey(privateKeyBytes) {
         const identity = new Identity();
         identity.loadPrivateKey(privateKeyBytes);
         return identity;
     }
 
+    /**
+     * Create a new Identity with randomly generated keys.
+     * @returns {Identity}
+     */
     static create() {
 
         const identity = new Identity();
@@ -75,6 +83,13 @@ class Identity {
 
         return identity;
 
+    }
+
+    /**
+     * Called internally to update the Identity hashes.
+     */
+    updateHashes() {
+        this.hash = Cryptography.truncatedHash(this.getPublicKey());
     }
 
     /**
@@ -124,6 +139,10 @@ class Identity {
         }
     }
 
+    /**
+     * Returns the Public Key for this Identity.
+     * @returns {Buffer}
+     */
     getPublicKey() {
         return Buffer.concat([
             this.publicKeyBytes,
@@ -131,6 +150,10 @@ class Identity {
         ]);
     }
 
+    /**
+     * Returns the Private Key for this Identity.
+     * @returns {Buffer}
+     */
     getPrivateKey() {
         return Buffer.concat([
             this.privateKeyBytes,
@@ -138,27 +161,33 @@ class Identity {
         ]);
     }
 
-    updateHashes() {
-        this.hash = Cryptography.truncatedHash(this.getPublicKey())
-        this.hexhash = this.hash.toString("hex");
-    }
-
-    // Validates the signature of a signed message.
+    /**
+     * Validates the signature of a signed message.
+     * @param signature the signature to validate
+     * @param data the data this signature is for
+     * @returns {boolean}
+     */
     validate(signature, data) {
         return ed25519.verify(signature, data, this.signaturePublicKeyBytes);
     }
 
+    /**
+     * Signs the provided data with this Identity's signature private key.
+     * @param data
+     * @returns {Buffer}
+     */
     sign(data) {
         return Buffer.from(ed25519.sign(data, this.signaturePrivateKeyBytes));
     }
 
     /**
      * Encrypts information for the identity.
-     * @param data
+     * @param data the data to encrypt
      * @returns {Buffer}
      */
     encrypt(data) {
 
+        // generate an ephemeral private key
         const ephemeralPrivateKeyBytes = Buffer.from(x25519.utils.randomPrivateKey());
         const ephemeralPublicKeyBytes = Buffer.from(x25519.getPublicKey(ephemeralPrivateKeyBytes));
 
@@ -192,7 +221,7 @@ class Identity {
 
     /**
      * Decrypts information for the identity.
-     * @param data
+     * @param data the data to decrypt
      * @returns {Buffer}
      */
     decrypt(data) {
@@ -213,96 +242,10 @@ class Identity {
 
     }
 
-    static validateAnnounce(packet, onlyValidateSignature = false) {
-
-        // packets types that aren't announces are not valid
-        if(packet.packetType !== Packet.ANNOUNCE){
-            return false;
-        }
-
-        // read data from packet
-        const data = Array.from(packet.data);
-        const publicKey = Buffer.from(data.splice(0, Identity.KEYSIZE_IN_BYTES));
-        const nameHash = Buffer.from(data.splice(0, Identity.NAME_HASH_LENGTH_IN_BYTES));
-        const randomHash = Buffer.from(data.splice(0, 10)); // 5 bytes random, 5 bytes time
-
-        // read ratchet bytes if context flag is set
-        let ratchet = Buffer.from([]);
-        if(packet.contextFlag === Packet.FLAG_SET){
-            ratchet = Buffer.from(data.splice(0, this.RATCHETSIZE_IN_BYTES));
-        }
-
-        // read signature and use remaining bytes as app data
-        const signature = Buffer.from(data.splice(0, this.SIGLENGTH_IN_BYTES));
-        const appData = Buffer.from(data);
-
-        // get data that should be signed
-        const signedData = Buffer.concat([
-            packet.destinationHash,
-            publicKey,
-            nameHash,
-            randomHash,
-            ratchet,
-            appData,
-        ]);
-
-        // load identity from public key
-        const announcedIdentity = Identity.fromPublicKey(publicKey);
-
-        // validate signature of announce with announced identity
-        if(!announcedIdentity.validate(signature, signedData)){
-            console.log(`Received invalid announce for ${packet.destinationHash.toString("hex")}: Invalid signature.`)
-            return false;
-        }
-
-        // check if we only want to validate the signature
-        if(onlyValidateSignature){
-            return true;
-        }
-
-        // get hash material and expected hash
-        const hashMaterial = Buffer.concat([nameHash, announcedIdentity.hash]);
-        const expectedHash = Cryptography.fullHash(hashMaterial).slice(0, Constants.TRUNCATED_HASHLENGTH_IN_BYTES);
-
-        // check if destination hash matches expected hash
-        if(!packet.destinationHash.equals(expectedHash)){
-            console.log(`Received invalid announce for ${packet.destinationHash.toString("hex")}: Destination mismatch.`);
-            return false;
-        }
-
-        // todo implement
-
-        // if (Identity.knownDestinations[destinationHash] && !publicKey.equals(Identity.knownDestinations[destinationHash][2])) {
-        //     RNS.log("Received announce with valid signature and destination hash, but announced public key does not match already known public key.", RNS.LOG_CRITICAL);
-        //     return false;
-        // }
-        //
-        // RNS.Identity.remember(packet.getHash(), destinationHash, publicKey, appData);
-        //
-        // let signalStr = "";
-        // if (packet.rssi !== undefined || packet.snr !== undefined) {
-        //     signalStr += " [";
-        //     if (packet.rssi !== undefined) signalStr += `RSSI ${packet.rssi}dBm`;
-        //     if (packet.rssi !== undefined && packet.snr !== undefined) signalStr += ", ";
-        //     if (packet.snr !== undefined) signalStr += `SNR ${packet.snr}dB`;
-        //     signalStr += "]";
-        // }
-        //
-        // if (packet.transportId) {
-        //     RNS.log(`Valid announce for ${RNS.prettyHexRep(destinationHash)} ${packet.hops} hops away, received via ${RNS.prettyHexRep(packet.transportId)} on ${packet.receivingInterface}${signalStr}`, RNS.LOG_EXTREME);
-        // } else {
-        //     RNS.log(`Valid announce for ${RNS.prettyHexRep(destinationHash)} ${packet.hops} hops away, received on ${packet.receivingInterface}${signalStr}`, RNS.LOG_EXTREME);
-        // }
-        //
-        // if (ratchet) {
-        //     Identity._rememberRatchet(destinationHash, ratchet);
-        // }
-        //
-
-        return true;
-
-    }
-
+    /**
+     * Prove that the provided Packet was received.
+     * @param packetToProve
+     */
     prove(packetToProve) {
 
         // sign the hash of the packet to prove
@@ -319,12 +262,8 @@ class Identity {
             ]);
         }
 
-        // todo attached interface
-        // todo reverse path table
-
         // create data packet
         const packet = new Packet();
-        packet.hops = packetToProve.hops;
         packet.headerType = Packet.HEADER_1;
         packet.packetType = Packet.PROOF;
         packet.transportType = Transport.BROADCAST;
@@ -338,9 +277,8 @@ class Identity {
         // pack packet
         const raw = packet.pack();
 
-        // fixme: only send to receiving interface, and to reverse path table
-        // send packet to all interfaces
-        packetToProve.destination.rns.sendData(raw);
+        // send packet to attached interface
+        packetToProve.destination.rns.sendData(raw, packetToProve.attachedInterface);
 
     }
 

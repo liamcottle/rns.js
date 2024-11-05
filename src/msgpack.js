@@ -12,10 +12,20 @@ class MsgPack {
         });
     }
 
+    /**
+     * Packs the provided data with msgpack.
+     * @param data the data to pack
+     * @returns {Buffer}
+     */
     static pack(data) {
         return this.packer().pack(data);
     }
 
+    /**
+     * Unpacks the provided data with msgpack.
+     * @param data the data to unpack
+     * @returns {any}
+     */
     static unpack(data) {
         return this.packer().unpack(data);
     }

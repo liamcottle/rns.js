@@ -42,7 +42,6 @@ class Destination extends EventEmitter {
         // generate the destination address hash
         this.hash = Destination.hash(this.identity, this.appName, ...aspects);
         this.nameHash = Cryptography.fullHash(nameWithoutIdentity).slice(0, Identity.NAME_HASH_LENGTH_IN_BYTES);
-        this.hexhash = this.hash.toString("hex");
 
     }
 
@@ -62,7 +61,7 @@ class Destination extends EventEmitter {
         }
 
         if(identity != null){
-            name += "." + identity.hexhash;
+            name += "." + identity.hash.toString("hex");
         }
 
         return name;
@@ -83,6 +82,11 @@ class Destination extends EventEmitter {
 
     }
 
+    /**
+     * Encrypts data for this Destination.
+     * @param data the data to encrypt
+     * @returns {*}
+     */
     encrypt(data) {
 
         // handle single destination type with known identity
@@ -91,8 +95,15 @@ class Destination extends EventEmitter {
             return this.identity.encrypt(data);
         }
 
+        throw new Error("Not Implemented");
+
     }
 
+    /**
+     * Decrypts data for this Destination.
+     * @param data the data to decrypt
+     * @returns {*}
+     */
     decrypt(data) {
 
         // todo
@@ -110,6 +121,10 @@ class Destination extends EventEmitter {
 
     }
 
+    /**
+     * Called internally when a Packet is received by this Destination.
+     * @param packet
+     */
     onPacket(packet) {
 
         // set destination on packet so prove will have access to it
@@ -134,6 +149,10 @@ class Destination extends EventEmitter {
 
     }
 
+    /**
+     * Called internally when this Destination receives an incoming Link Request.
+     * @param packet
+     */
     onIncomingLinkRequest(packet) {
 
         console.log("incoming link request", packet);
@@ -151,6 +170,10 @@ class Destination extends EventEmitter {
 
     }
 
+    /**
+     * Send an announce on all interfaces with the provided app data.
+     * @param appDataBytes
+     */
     announce(appDataBytes = null) {
 
         // create random hash
@@ -229,6 +252,10 @@ class Destination extends EventEmitter {
 
     }
 
+    /**
+     * Send a data packet to this Destination.
+     * @param data
+     */
     send(data) {
 
         // create data packet
@@ -243,6 +270,7 @@ class Destination extends EventEmitter {
         packet.destinationType = this.type;
         packet.data = data;
 
+        // todo remove this
         // // force using a transport node
         // packet.headerType = Packet.HEADER_2;
         // packet.transportType = Transport.TRANSPORT;

@@ -1,5 +1,7 @@
 import Identity from "./identity.js";
 import Packet from "./packet.js";
+import Cryptography from "./cryptography.js";
+import Constants from "./constants.js";
 
 class Announce {
 
@@ -9,6 +11,11 @@ class Announce {
         this.appData = null;
     }
 
+    /**
+     * Parse and validate an Announce from the provided Packet.
+     * @param packet
+     * @returns {Announce|null}
+     */
     static fromPacket(packet) {
         try {
 
@@ -51,6 +58,16 @@ class Announce {
                 return null;
             }
 
+            // get hash material and expected hash
+            const hashMaterial = Buffer.concat([nameHash, announcedIdentity.hash]);
+            const expectedHash = Cryptography.fullHash(hashMaterial).slice(0, Constants.TRUNCATED_HASHLENGTH_IN_BYTES);
+
+            // check if destination hash matches expected hash
+            if(!packet.destinationHash.equals(expectedHash)){
+                console.log(`Received invalid announce for ${packet.destinationHash.toString("hex")}: Destination mismatch.`);
+                return null;
+            }
+
             // create and return announce
             const announce = new Announce();
             announce.destinationHash = packet.destinationHash;
@@ -59,6 +76,7 @@ class Announce {
             return announce;
 
         } catch(e) {
+            console.log("failed to parse and validate announce", e);
             return null;
         }
     }

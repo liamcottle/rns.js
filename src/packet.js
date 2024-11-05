@@ -62,11 +62,16 @@ class Packet {
         this.data = null;
 
         this.packetHash = null;
-
         this.destination = null;
+        this.receivingInterface = null;
 
     }
 
+    /**
+     * Parse a Packet from the provided bytes.
+     * @param bytes
+     * @returns {Packet}
+     */
     static fromBytes(bytes) {
 
         // create new packet
@@ -106,6 +111,16 @@ class Packet {
 
     }
 
+    /**
+     * Packs the provided packet flags into a single byte integer.
+     * @param context
+     * @param headerType
+     * @param contextFlag
+     * @param transportType
+     * @param destinationType
+     * @param packetType
+     * @returns {number}
+     */
     static packFlags(context, headerType, contextFlag, transportType, destinationType, packetType) {
 
         // // force destination type for link request proof
@@ -122,12 +137,21 @@ class Packet {
 
     }
 
-    static uint8ToBytes(flags) {
+    /**
+     * Converts the provided 8-bit unsigned integer value to bytes.
+     * @param value
+     * @returns {Buffer}
+     */
+    static uint8ToBytes(value) {
         const flagsBuffer = Buffer.alloc(1);
-        flagsBuffer.writeUInt8(flags, 0);
+        flagsBuffer.writeUInt8(value, 0);
         return flagsBuffer;
     }
 
+    /**
+     * Packs this Packet into raw bytes to send to an Interface.
+     * @returns {null}
+     */
     pack() {
 
         // set hop count
@@ -199,18 +223,33 @@ class Packet {
 
     }
 
+    /**
+     * Get the hash for this Packet.
+     * @returns {Buffer}
+     */
     getHash() {
         return Cryptography.fullHash(this.getHashablePart());
     }
 
+    /**
+     * Get the truncated hash for this Packet.
+     * @returns {Buffer}
+     */
     getTruncatedHash() {
         return Cryptography.truncatedHash(this.getHashablePart());
     }
 
+    /**
+     * Called internally to update the hash for this Packet.
+     */
     updateHash() {
         this.packetHash = this.getHash();
     }
 
+    /**
+     * Called internally to get the hashable data for this Packet.
+     * @returns {Buffer}
+     */
     getHashablePart() {
 
         // fixme implement properly
@@ -228,6 +267,9 @@ class Packet {
 
     }
 
+    /**
+     * Prove that the provided Packet was received.
+     */
     prove() {
         if(this.destination){
             this.destination.identity.prove(this);

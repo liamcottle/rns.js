@@ -34,13 +34,17 @@ class Link extends EventEmitter {
         this.initiator = true;
         this.status = Link.PENDING;
         this.destination = destination;
+        this.attachedInterface = null;
 
+        // generate private keys
         this.privateKeyBytes = Buffer.from(x25519.utils.randomPrivateKey());
         this.signaturePrivateKeyBytes = Buffer.from(ed25519.utils.randomPrivateKey());
 
+        // get public keys
         this.publicKeyBytes = Buffer.from(x25519.getPublicKey(this.privateKeyBytes));
         this.signaturePublicKeyBytes = Buffer.from(x25519.getPublicKey(this.signaturePrivateKeyBytes));
 
+        // load peer keys from destination identity
         this.loadPeerKeysFromIdentity(destination.identity);
 
         if(this.initiator){
@@ -76,12 +80,17 @@ class Link extends EventEmitter {
             // fixme: only send on relevant interface
             // send link request
             console.log(`Sending Link request ${this.hash.toString("hex")} to ${destination.hash.toString("hex")}`)
-            destination.rns.sendData(packed);
+            this.destination.rns.sendData(packed);
 
         }
 
     }
 
+    /**
+     * Validates an incoming Link Request packet.
+     * @param linkRequestPacket
+     * @returns {boolean} true if the Link Request is valid.
+     */
     validateLinkRequest(linkRequestPacket) {
         try {
 
@@ -94,7 +103,7 @@ class Link extends EventEmitter {
             this.initiator = false;
             this.status = Link.PENDING;
             this.destination = linkRequestPacket.destination;
-            // todo link.attachedInterface = packet.receivingInterface;
+            this.attachedInterface = linkRequestPacket.receivingInterface;
 
             // load peer keys
             const peerPublicKeyBytes = linkRequestPacket.data.slice(0, Link.ECPUBSIZE / 2);
@@ -123,6 +132,9 @@ class Link extends EventEmitter {
         }
     }
 
+    /**
+     * Accepts a Link Request
+     */
     accept() {
 
         // send proof of link establishment
@@ -147,7 +159,6 @@ class Link extends EventEmitter {
     }
 
     setLinkId(packet) {
-        // this.linkId = packet.getTruncatedHash();
         this.hash = packet.getTruncatedHash();
     }
 
@@ -205,9 +216,8 @@ class Link extends EventEmitter {
 
             // update state
             this.rtt = Date.now() - this.requestTime;
-            // self.attached_interface = packet.receiving_interface
-            // self.__remote_identity = self.destination.identity
-            this.status = Link.ACTIVE;
+            this.attachedInterface = proofPacket.receivingInterface;
+            // todo self.__remote_identity = self.destination.identity
             this.destination.rns.activateLink(this);
             this.lastProof = this.activatedAt;
 
@@ -232,9 +242,8 @@ class Link extends EventEmitter {
             // pack packet
             const raw = rttPacket.pack();
 
-            // fixme: only send to receiving interface, and to reverse path table
-            // send packet to all interfaces
-            this.destination.rns.sendData(raw);
+            // send packet to attached interface
+            this.destination.rns.sendData(raw, this.attachedInterface);
 
             // fire link established callback
             this.emit("established");
@@ -310,9 +319,8 @@ class Link extends EventEmitter {
         // pack packet
         const raw = packet.pack();
 
-        // fixme only send on relevant interface
-        // send packet to all interfaces
-        this.destination.rns.sendData(raw);
+        // send packet to attached interface
+        this.destination.rns.sendData(raw, this.attachedInterface);
 
     }
 
@@ -347,11 +355,15 @@ class Link extends EventEmitter {
         // pack packet
         const raw = packet.pack();
 
-        // send packet to all interfaces
-        this.destination.rns.sendData(raw);
+        // send packet to attached interface
+        this.destination.rns.sendData(raw, this.attachedInterface);
 
     }
 
+    /**
+     * Called internally when a Packet has been received.
+     * @param packet
+     */
     onPacket(packet) {
 
         // set link as packet destination
@@ -380,6 +392,10 @@ class Link extends EventEmitter {
 
     }
 
+    /**
+     * Called internally when a Link Request RTT packet has been received.
+     * @param packet
+     */
     onLinkRequestRtt(packet) {
 
         // measure round trip time
@@ -431,9 +447,8 @@ class Link extends EventEmitter {
         // pack packet
         const raw = packet.pack();
 
-        // fixme: only send to receiving interface, and to reverse path table
-        // send packet to all interfaces
-        this.destination.rns.sendData(raw);
+        // send packet to attached interface
+        this.destination.rns.sendData(raw, this.attachedInterface);
 
     }
 

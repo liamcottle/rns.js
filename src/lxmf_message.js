@@ -12,6 +12,11 @@ class LXMessage {
         this.fields = null;
     }
 
+    /**
+     * Parse an LXMessage from the provided data.
+     * @param data
+     * @returns {null|LXMessage}
+     */
     static fromBytes(data) {
         try {
 
@@ -44,6 +49,12 @@ class LXMessage {
         }
     }
 
+    /**
+     * Packs the LXMessage to bytes for sending to a Destination.
+     * @param identity the identity sending this message, which is used to sign it
+     * @param opportunistic set to true if this message is being sent opportunistically
+     * @returns {Buffer}
+     */
     pack(identity, opportunistic = true) {
 
         // ensure fields is a Map, otherwise keys get converted from int to string...
