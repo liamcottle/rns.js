@@ -30,7 +30,9 @@ You should probably look at the official reference stack written in Python;
 ## TODO
 
 - [ ] Tidy up logic for sending packets and packet types
+- [ ] Implement Link heartbeat packets
 - [ ] Implement packet to gracefully close Link
+- [ ] Fire event when Link close packet is received
 - [ ] Validate LXMF message signatures
 - [ ] Only send packets to relevant interface. Currently sends to all interfaces
 - [ ] Implement Resources over Links
