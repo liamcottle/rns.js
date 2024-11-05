@@ -13,6 +13,7 @@ import MsgPack from "./msgpack.js";
  * Events emitted by a Link
  * - established: When the link has been established.
  * - packet: When a Packet has been received over the Link.
+ * - close: When the Link has been closed.
  */
 class Link extends EventEmitter {
 
@@ -23,7 +24,11 @@ class Link extends EventEmitter {
     static HANDSHAKE = 0x01;
     static ACTIVE = 0x02;
     // static STALE = 0x03;
-    // static CLOSED = 0x04;
+    static CLOSED = 0x04;
+
+    // static TIMEOUT = 0x01;
+    static INITIATOR_CLOSED = 0x02;
+    static DESTINATION_CLOSED = 0x03;
 
     constructor() {
         super();
@@ -366,6 +371,12 @@ class Link extends EventEmitter {
      */
     onPacket(packet) {
 
+        // do nothing if link closed
+        if(this.status === Link.CLOSED){
+            console.log("dropping packet received for closed link");
+            return;
+        }
+
         // set link as packet destination
         packet.destination = this;
 
@@ -388,6 +399,24 @@ class Link extends EventEmitter {
             if(!this.initiator){
                 this.onLinkRequestRtt(packet);
             }
+        }
+
+        // handle link close
+        else if(packet.context === Packet.LINKCLOSE){
+
+            // decrypt link id from packet data and do nothing if it doesn't match this link
+            const linkIdToClose = this.decrypt(packet.data);
+            if(!this.hash.equals(linkIdToClose)){
+                return;
+            }
+
+            // mark link as closed
+            this.status = Link.CLOSED;
+            this.closeReason = this.initiator ? Link.DESTINATION_CLOSED : Link.INITIATOR_CLOSED;
+
+            // fire close event
+            this.emit("close");
+
         }
 
     }
@@ -457,6 +486,11 @@ class Link extends EventEmitter {
      */
     close() {
 
+        // do nothing if link already closed
+        if(this.status === Link.CLOSED){
+            return;
+        }
+
         // create data packet
         const packet = new Packet();
         packet.headerType = Packet.HEADER_1;
@@ -474,6 +508,13 @@ class Link extends EventEmitter {
 
         // send packet to attached interface
         this.destination.rns.sendData(raw, this.attachedInterface);
+
+        // mark link as closed
+        this.status = Link.CLOSED;
+        this.closeReason = this.initiator ? Link.INITIATOR_CLOSED : Link.DESTINATION_CLOSED;
+
+        // fire close event
+        this.emit("close");
 
     }
 
