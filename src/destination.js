@@ -4,6 +4,7 @@ import Cryptography from "./cryptography.js";
 import Packet from "./packet.js";
 import Transport from "./transport.js";
 import Identity from "./identity.js";
+import Link from "./link.js";
 
 /**
  * Events emitted by a Destination
@@ -140,7 +141,7 @@ class Destination extends EventEmitter {
         // todo allow destination to enable/disable incoming link requests
 
         // create link from link request
-        const link = packet.destination.rns._createLink();
+        const link = new Link();
         if(!link.validateLinkRequest(packet)){
             return;
         }

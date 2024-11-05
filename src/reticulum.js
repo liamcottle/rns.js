@@ -22,11 +22,6 @@ class Reticulum extends EventEmitter {
 
     }
 
-    // fixme: this is currently here to avoid circular dependency require errors...
-    _createLink() {
-        return new Link();
-    }
-
     addInterface(iface) {
 
         // tell interface which rns instance to use
