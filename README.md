@@ -28,6 +28,10 @@ You should probably look at the official reference stack written in Python;
 - [x] Close Links and listen for when they are closed by the other side
 - [x] Send and receive data packets over an established Link
 
+## Examples
+
+There's a few scripts in the [examples](./examples) folder for reference on what currently works.
+
 ## TODO
 
 - [ ] Tidy up logic for sending packets and packet types
