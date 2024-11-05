@@ -420,7 +420,6 @@ class Link extends EventEmitter {
 
         // create data packet
         const packet = new Packet();
-        packet.hops = packetToProve.hops; // todo
         packet.headerType = Packet.HEADER_1;
         packet.packetType = Packet.PROOF;
         packet.transportType = Transport.BROADCAST;
