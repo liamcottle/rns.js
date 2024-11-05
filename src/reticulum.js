@@ -7,6 +7,10 @@ import Packet from "./packet.js";
 import TCPClientInterface from "./interfaces/tcp_client_interface.js";
 import LXMessage from "./lxmf_message.js";
 
+/**
+ * Events emitted by Reticulum
+ * - announce: When an Announce has been received.
+ */
 class Reticulum extends EventEmitter {
 
     constructor() {
@@ -57,15 +61,30 @@ class Reticulum extends EventEmitter {
         }
     }
 
+    /**
+     * Returns true if the provided destinationHash is a local destination.
+     * i.e if it has been registered with a direction of "IN".
+     * @param destinationHash
+     * @returns {boolean}
+     */
+    isLocalDestination(destinationHash) {
+        return this.destinations.find((destination) => destination.hash.equals(destinationHash) && destination.direction === Destination.IN) != null;
+    }
+
     onPacketReceived(packet, receivingInterface) {
+
+        // set receiving interface
+        packet.receivingInterface = receivingInterface;
 
         // handle received announces
         if(packet.packetType === Packet.ANNOUNCE){
 
-            // todo if announce is for local destination, ignore it
+            // if announce is for local destination, ignore it
+            if(this.isLocalDestination(packet.destinationHash)){
+                return;
+            }
 
-            // handle received announce
-            // const announce = Identity.validateAnnounce(packet);
+            // parse and validate received announce
             const announce = Announce.fromPacket(packet);
             if(!announce){
                 return;
