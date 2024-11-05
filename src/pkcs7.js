@@ -2,14 +2,21 @@ class PKCS7 {
 
     static BLOCKSIZE = 16;
 
-    static pad(data) {
-        const paddingLength = PKCS7.BLOCKSIZE - (data.length % PKCS7.BLOCKSIZE);
-        const padding = Buffer.alloc(paddingLength, paddingLength);
+    static pad(data, bs = PKCS7.BLOCKSIZE) {
+        const l = data.length;
+        const n = bs - (l % bs);
+        const padding = Buffer.alloc(n, n);
         return Buffer.concat([data, padding]);
     }
 
-    static unpad(padded) {
-        return padded.subarray(0, padded.length - padded[padded.length - 1]);
+    static unpad(data, bs = PKCS7.BLOCKSIZE) {
+        const l = data.length;
+        const n = data[l - 1];
+        if(n > bs){
+            throw new Error(`Cannot unpad, invalid padding length of ${n} bytes`);
+        } else {
+            return data.slice(0, l - n);
+        }
     }
 
 }

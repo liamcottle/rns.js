@@ -47,6 +47,7 @@ class Fernet {
         const paddedData = PKCS7.pad(data);
 
         const cipher = crypto.createCipheriv('aes-128-cbc', this._encryption_key, iv);
+        cipher.setAutoPadding(false); // disable automatic pkcs7 padding by crypto lib
         let ciphertext = cipher.update(paddedData);
         ciphertext = Buffer.concat([ciphertext, cipher.final()]);
 
@@ -73,12 +74,11 @@ class Fernet {
         const ciphertext = token.slice(16, -32);
 
         const decipher = crypto.createDecipheriv('aes-128-cbc', this._encryption_key, iv);
+        decipher.setAutoPadding(false); // disable automatic pkcs7 padding by crypto lib
         let plaintext = decipher.update(ciphertext);
         plaintext = Buffer.concat([plaintext, decipher.final()]);
 
-        // fixme unpadding seems to not be working as expected...
-        // return PKCS7.unpad(plaintext);
-        return plaintext;
+        return PKCS7.unpad(plaintext);
 
     }
 
