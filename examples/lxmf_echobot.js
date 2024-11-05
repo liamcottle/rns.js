@@ -3,6 +3,7 @@ const TCPClientInterface = require("../src/interfaces/tcp_client_interface");
 const Identity = require("../src/identity");
 const Destination = require("../src/destination");
 const LXMessage = require("../src/lxmf_message");
+const Packet = require("../src/packet");
 
 // create rns instance
 const rns = new Reticulum();
@@ -24,6 +25,12 @@ rns.on("announce", (data) => {
     console.log(`${data.announce.destinationHash.toString("hex")} is now ${data.hops} hops away on interface [${data.interface_name}] public key: ${data.announce.identity.getPublicKey().toString("hex")}`);
 });
 
+// initial announce
+setTimeout(() => {
+    console.log("announcing lxmf destination", localLxmfDestination.hash.toString("hex"));
+    localLxmfDestination.announce(Buffer.from("@liamcottle/rns.js"));
+}, 2000);
+
 // listen for opportunistic lxmf packets
 localLxmfDestination.on("packet", (event) => {
 
@@ -32,6 +39,8 @@ localLxmfDestination.on("packet", (event) => {
     if(!receivedLxmfMessage){
         return;
     }
+
+    console.log("received opportunistic lxmf message", receivedLxmfMessage);
 
     // prove that the packet was received
     event.packet.prove();
@@ -60,7 +69,53 @@ localLxmfDestination.on("packet", (event) => {
 
 });
 
-// initial announce
-setTimeout(() => {
-    localLxmfDestination.announce(Buffer.from("@liamcottle/rns.js"));
-}, 2000);
+// listen for link requests for receiving direct lxmf messages
+localLxmfDestination.on("link_request", (link) => {
+
+    // log
+    console.log("on link request", link);
+
+    // log when link is established
+    link.on("established", () => {
+        console.log(`link established rtt: ${link.rtt}ms`);
+    });
+
+    // handle packet received over link
+    link.on("packet", (event) => {
+
+        console.log("link packet received", event);
+
+        // parse destination hash and lxmf message bytes from link packet
+        const data = Array.from(event.data);
+        const destinationHash = Buffer.from(data.splice(0, Packet.DESTINATION_HASH_LENGTH));
+        const lxmfMessageBytes = Buffer.from(data); // remaining data
+
+        // parse and log lxmf message
+        const receivedLxmfMessage = LXMessage.fromBytes(lxmfMessageBytes);
+        if(!receivedLxmfMessage){
+            return;
+        }
+
+        // prove that the packet was received
+        link.proveLinkPacket(event.packet);
+
+        console.log("received direct lxmf message", receivedLxmfMessage);
+
+        // build reply with received content
+        const replyLxmfMessage = new LXMessage();
+        replyLxmfMessage.sourceHash = localLxmfDestination.hash;
+        replyLxmfMessage.destinationHash = receivedLxmfMessage.sourceHash;
+        replyLxmfMessage.title = receivedLxmfMessage.title;
+        replyLxmfMessage.content = receivedLxmfMessage.content;
+        replyLxmfMessage.fields = receivedLxmfMessage.fields;
+
+        // echo it back over the link
+        const packed = replyLxmfMessage.pack(identity, false);
+        link.send(packed);
+
+    });
+
+    // accept link from sender
+    link.accept();
+
+});

@@ -328,6 +328,10 @@ class Link extends EventEmitter {
         return fernet.decrypt(data);
     }
 
+    sign(data) {
+        return Buffer.from(ed25519.sign(data, this.signaturePrivateKeyBytes));
+    }
+
     send(data) {
 
         // create data packet
@@ -352,9 +356,8 @@ class Link extends EventEmitter {
 
     onPacket(packet) {
 
-        // set link on packet so prove will have access to it
+        // set link as packet destination
         packet.destination = this;
-        packet.link = this;
 
         // handle packet data for link
         if(packet.context === Packet.NONE) {
@@ -401,6 +404,39 @@ class Link extends EventEmitter {
 
         // fire link established callback
         this.emit("established");
+
+    }
+
+    proveLinkPacket(packetToProve) {
+
+        // sign the hash of the packet to prove
+        const signature = this.sign(packetToProve.packetHash);
+
+        // create explicit proof data (rns python stack doesn't use implicit for link packet proofs)
+        const proofData = Buffer.concat([
+            packetToProve.packetHash,
+            signature,
+        ]);
+
+        // create data packet
+        const packet = new Packet();
+        packet.hops = packetToProve.hops; // todo
+        packet.headerType = Packet.HEADER_1;
+        packet.packetType = Packet.PROOF;
+        packet.transportType = Transport.BROADCAST;
+        packet.context = Packet.NONE;
+        packet.contextFlag = Packet.FLAG_UNSET;
+        packet.destination = this;
+        packet.destinationHash = this.hash;
+        packet.destinationType = Destination.LINK;
+        packet.data = proofData;
+
+        // pack packet
+        const raw = packet.pack();
+
+        // fixme: only send to receiving interface, and to reverse path table
+        // send packet to all interfaces
+        this.destination.rns.sendData(raw);
 
     }
 
