@@ -22,12 +22,15 @@ You should probably look at the official reference stack written in Python;
 - [x] Listen for inbound packets to a Destination
 - [x] Send outbound packets to a Destination
 - [x] Send and receive opportunistic LXMF messages over single packets
+- [x] Send and receive direct LXMF messages over an inbound Link
 - [x] Accept inbound Links to a Destination
 - [x] Create outbound Links to a Destination
 - [x] Send and receive data packets over an established Link
 
 ## TODO
 
+- [ ] Tidy up logic for sending packets and packet types
+- [ ] Implement packet to gracefully close Link
 - [ ] Validate LXMF message signatures
 - [ ] Only send packets to relevant interface. Currently sends to all interfaces
 - [ ] Implement Resources over Links
