@@ -25,16 +25,15 @@ You should probably look at the official reference stack written in Python;
 - [x] Send and receive direct LXMF messages over an inbound Link
 - [x] Accept inbound Links to a Destination
 - [x] Create outbound Links to a Destination
+- [x] Close Links and listen for when they are closed by the other side
 - [x] Send and receive data packets over an established Link
 
 ## TODO
 
 - [ ] Tidy up logic for sending packets and packet types
 - [ ] Implement Link heartbeat packets
-- [ ] Implement packet to gracefully close Link
-- [ ] Fire event when Link close packet is received
 - [ ] Validate LXMF message signatures
-- [ ] Only send packets to relevant interface. Currently sends to all interfaces
+- [ ] Only send packets to relevant interface. Some packets still send to all interfaces
 - [ ] Implement Resources over Links
 - [ ] Support LXMF messages over Link Resources
 - [ ] Implement rate limits
