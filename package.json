@@ -4,7 +4,7 @@
   "description": "",
   "main": "./src/reticulum.js",
   "type": "module",
-  "author": "",
+  "author": "Liam Cottle",
   "license": "MIT",
   "dependencies": {
     "@noble/curves": "^1.6.0",
