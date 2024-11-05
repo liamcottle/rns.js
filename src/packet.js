@@ -33,7 +33,7 @@ class Packet {
     // static CHANNEL        = 0x0E; // Packet contains link channel data
     // static KEEPALIVE      = 0xFA; // Packet is a keepalive packet
     // static LINKIDENTIFY   = 0xFB; // Packet is a link peer identification proof
-    // static LINKCLOSE      = 0xFC; // Packet is a link close message
+    static LINKCLOSE      = 0xFC; // Packet is a link close message
     // static LINKPROOF      = 0xFD; // Packet is a link packet proof
     static LRRTT          = 0xFE; // Packet is a link request round-trip time measurement
     static LRPROOF        = 0xFF; // Packet is a link request proof

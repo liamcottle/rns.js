@@ -452,6 +452,31 @@ class Link extends EventEmitter {
 
     }
 
+    /**
+     * Send packet to tell other side of the Link we are closing it.
+     */
+    close() {
+
+        // create data packet
+        const packet = new Packet();
+        packet.headerType = Packet.HEADER_1;
+        packet.packetType = Packet.DATA;
+        packet.transportType = Transport.BROADCAST;
+        packet.context = Packet.LINKCLOSE;
+        packet.contextFlag = Packet.FLAG_UNSET;
+        packet.destination = this;
+        packet.destinationHash = this.hash;
+        packet.destinationType = Destination.LINK;
+        packet.data = this.hash;
+
+        // pack packet
+        const raw = packet.pack();
+
+        // send packet to attached interface
+        this.destination.rns.sendData(raw, this.attachedInterface);
+
+    }
+
 }
 
 export default Link;
