@@ -2,7 +2,7 @@
 
 An _in-progress_, implementation of the [Reticulum Network Stack](https://reticulum.network/) written in Javascript.
 
-This implementation is extremely limited, and is probably not what you should be using.
+This implementation is extremely limited, will likely have breaking changes and is probably not what you should be using.
 
 I am implementing this to learn the RNS stack at the protocol level, while writing it in a language I am very familiar with.
 
