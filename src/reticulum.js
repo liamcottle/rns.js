@@ -18,7 +18,6 @@ class Reticulum extends EventEmitter {
         this.interfaces = [];
         this.destinations = [];
         this.links = []; // a list of known links in any state
-        this.packetHashList = []; // a list of packet hashes for duplicate detection
 
     }
 
@@ -43,13 +42,6 @@ class Reticulum extends EventEmitter {
         for(const iface of this.interfaces){
             iface.sendData(data);
         }
-    }
-
-    addPacketToHashList(packetHash) {
-
-        // todo auto truncate to max length, and save to persistent state?
-        this.packetHashList.push(packetHash);
-
     }
 
     registerLink(link) {
