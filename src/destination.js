@@ -4,6 +4,11 @@ const Packet = require("./packet");
 const Transport = require("./transport");
 const EventEmitter = require("./utils/events");
 
+/**
+ * Events emitted by a Destination
+ * - link_request: When a request to establish a Link has been received.
+ * - packet: When a Packet has been received over the Link.
+ */
 class Destination extends EventEmitter {
 
     // // constants
@@ -105,15 +110,42 @@ class Destination extends EventEmitter {
 
     onPacket(packet) {
 
-        const plaintext = this.decrypt(packet.data);
-
         // set destination on packet so prove will have access to it
         packet.destination = this;
 
-        this.emit("packet", {
-            packet: packet,
-            data: plaintext,
-        });
+        // handle incoming link requests
+        if(packet.packetType === Packet.LINKREQUEST){
+            this.onIncomingLinkRequest(packet);
+            return;
+        }
+
+        // decrypt packet data
+        const plaintext = this.decrypt(packet.data);
+
+        // handle incoming data
+        if(packet.packetType === Packet.DATA){
+            this.emit("packet", {
+                packet: packet,
+                data: plaintext,
+            });
+        }
+
+    }
+
+    onIncomingLinkRequest(packet) {
+
+        console.log("incoming link request", packet);
+
+        // todo allow destination to enable/disable incoming link requests
+
+        // create link from link request
+        const link = packet.destination.rns._createLink();
+        if(!link.validateLinkRequest(packet)){
+            return;
+        }
+
+        // fire link request event
+        this.emit("link_request", link);
 
     }
 

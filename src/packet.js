@@ -142,40 +142,49 @@ class Packet {
             Packet.uint8ToBytes(hops),
         ]);
 
-        // determine cipher text
-        let ciphertext;
-        if(this.packetType === Packet.ANNOUNCE){
-            // announce packets are not encrypted
-            ciphertext = this.data;
-        } else if(this.packetType === Packet.PROOF && this.context === Packet.NONE){
-            // add plaintext proof data
-            // proof packet data is not encrypted
-            // https://github.com/markqvist/Reticulum/blob/d002a75f348f69301f94e07abe1eb830649b329f/RNS/Packet.py#L377
-            ciphertext = this.data;
-        } else if(this.packetType === Packet.LINKREQUEST){
-            // link request packets are not encrypted
-            ciphertext = this.data;
+        if(this.context === Packet.LRPROOF) {
+            this.raw = Buffer.concat([
+                header,
+                this.destination.hash,
+                Buffer.from([this.context]),
+                this.data,
+            ]);
         } else {
-            // encrypt all other packets with the destination identity
-            ciphertext = this.destination.encrypt(this.data);
-        }
 
-        // create raw packet data based on header type
-        if(this.headerType === Packet.HEADER_1){
-            this.raw = Buffer.concat([
-                header,
-                this.destinationHash,
-                Buffer.from([this.context]),
-                ciphertext,
-            ]);
-        } else if(this.headerType === Packet.HEADER_2) {
-            this.raw = Buffer.concat([
-                header,
-                this.transportId,
-                this.destinationHash,
-                Buffer.from([this.context]),
-                ciphertext,
-            ]);
+            // determine cipher text
+            let ciphertext;
+            if(this.packetType === Packet.ANNOUNCE){
+                // announce packets are not encrypted
+                ciphertext = this.data;
+            } else if(this.packetType === Packet.PROOF && this.context === Packet.NONE){
+                // proof packets are not encrypted
+                ciphertext = this.data;
+            } else if(this.packetType === Packet.LINKREQUEST){
+                // link request packets are not encrypted
+                ciphertext = this.data;
+            } else {
+                // encrypt all other packets using the destination encryption function
+                ciphertext = this.destination.encrypt(this.data);
+            }
+
+            // create raw packet data based on header type
+            if(this.headerType === Packet.HEADER_1){
+                this.raw = Buffer.concat([
+                    header,
+                    this.destinationHash,
+                    Buffer.from([this.context]),
+                    ciphertext,
+                ]);
+            } else if(this.headerType === Packet.HEADER_2) {
+                this.raw = Buffer.concat([
+                    header,
+                    this.transportId,
+                    this.destinationHash,
+                    Buffer.from([this.context]),
+                    ciphertext,
+                ]);
+            }
+
         }
 
         // todo

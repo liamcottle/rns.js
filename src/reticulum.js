@@ -20,6 +20,11 @@ class Reticulum extends EventEmitter {
 
     }
 
+    // fixme: this is currently here to avoid circular dependency require errors...
+    _createLink() {
+        return new Link();
+    }
+
     addInterface(iface) {
 
         // tell interface which rns instance to use
@@ -59,6 +64,7 @@ class Reticulum extends EventEmitter {
         console.log(`Activating link ${link.hash.toString("hex")}`);
         if(this.links.includes(link) && link.status === Link.PENDING){
             link.status = Link.ACTIVE;
+            link.activatedAt = Date.now();
         }
     }
 
@@ -88,7 +94,7 @@ class Reticulum extends EventEmitter {
             if(packet.destinationType === Destination.LINK){
                 // pass data packets to their intended links
                 for(const link of this.links){
-                    if(link.status === Link.ACTIVE && link.hash.equals(packet.destinationHash)){
+                    if(link.hash.equals(packet.destinationHash)){
                         link.onPacket(packet);
                     }
                 }
@@ -101,9 +107,6 @@ class Reticulum extends EventEmitter {
                 }
             }
         } else if(packet.packetType === Packet.PROOF && packet.context === Packet.LRPROOF) {
-
-
-            console.log("link proof received", packet.data);
 
             // ensure link proof data size is as expected
             if(packet.data.length !== Identity.SIGLENGTH_IN_BYTES + Link.ECPUBSIZE / 2){
@@ -128,6 +131,15 @@ class Reticulum extends EventEmitter {
 
             // validate proof
             pendingLink.validateProof(packet);
+
+        } else if(packet.packetType === Packet.LINKREQUEST) {
+
+            // pass link request packets to their intended destination
+            for(const destination of this.destinations){
+                if(destination.hash.equals(packet.destinationHash) && destination.type === packet.destinationType){
+                    destination.onPacket(packet);
+                }
+            }
 
         }
 

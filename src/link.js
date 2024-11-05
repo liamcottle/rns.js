@@ -1,5 +1,8 @@
 const { ed25519, x25519 } = require("@noble/curves/ed25519");
-const { pack: msgpack } = require('msgpackr');
+const {
+    pack: msgpack,
+    unpack: unmsgpack,
+} = require('msgpackr');
 const Packet = require("./packet");
 const Transport = require("./transport");
 const Identity = require("./identity");
@@ -8,6 +11,11 @@ const Destination = require("./destination");
 const Fernet = require("./fernet");
 const EventEmitter = require("./utils/events");
 
+/**
+ * Events emitted by a Link
+ * - established: When the link has been established.
+ * - packet: When a Packet has been received over the Link.
+ */
 class Link extends EventEmitter {
 
     static KEYSIZE = 32;
@@ -73,6 +81,61 @@ class Link extends EventEmitter {
             destination.rns.sendData(packed);
 
         }
+
+    }
+
+    validateLinkRequest(linkRequestPacket) {
+        try {
+
+            // ensure link proof data size is as expected
+            if(linkRequestPacket.data.length !== Link.ECPUBSIZE){
+                console.log("link request validation failed: invalid packet data length");
+                return false;
+            }
+
+            this.initiator = false;
+            this.status = Link.PENDING;
+            this.destination = linkRequestPacket.destination;
+            // todo link.attachedInterface = packet.receivingInterface;
+
+            // load peer keys
+            const peerPublicKeyBytes = linkRequestPacket.data.slice(0, Link.ECPUBSIZE / 2);
+            const peerSignaturePublicKeyBytes = linkRequestPacket.data.slice(Link.ECPUBSIZE / 2, Link.ECPUBSIZE)
+            this.loadPeerKeys(peerPublicKeyBytes, peerSignaturePublicKeyBytes);
+
+            // generate private key
+            this.privateKeyBytes = Buffer.from(x25519.utils.randomPrivateKey());
+            this.publicKeyBytes = Buffer.from(x25519.getPublicKey(this.privateKeyBytes));
+
+            // load signature private key
+            this.signaturePrivateKeyBytes = this.destination.identity.signaturePrivateKeyBytes;
+            this.signaturePublicKeyBytes = this.destination.identity.signaturePublicKeyBytes;
+
+            // set link id
+            this.setLinkId(linkRequestPacket);
+
+            // perform handshake
+            this.handshake();
+
+            return true;
+
+        } catch(e) {
+            console.log("link validation failed", e);
+            return false;
+        }
+    }
+
+    accept() {
+
+        // send proof of link establishment
+        this.prove();
+
+        this.requestTime = Date.now();
+        this.destination.rns.registerLink(this);
+        this.lastInbound = Date.now();
+        // todo this.startWatchdog();
+
+        console.log(`Incoming link request ${this.hash.toString("hex")} accepted on (interface)`);
 
     }
 
@@ -147,9 +210,8 @@ class Link extends EventEmitter {
             // self.attached_interface = packet.receiving_interface
             // self.__remote_identity = self.destination.identity
             this.status = Link.ACTIVE;
-            this.activatedAt = Date.now();
-            this.lastProof = this.activatedAt;
             this.destination.rns.activateLink(this);
+            this.lastProof = this.activatedAt;
 
             console.log(`Link ${this.hash.toString("hex")} established with ${this.destination.hash.toString("hex")}, RTT is ${this.rtt}ms`);
 
@@ -176,7 +238,7 @@ class Link extends EventEmitter {
             // send packet to all interfaces
             this.destination.rns.sendData(raw);
 
-            // todo fire callback link_established
+            // fire link established callback
             this.emit("established");
 
             // if self.rtt != None and self.establishment_cost != None and self.rtt > 0 and self.establishment_cost > 0:
@@ -216,6 +278,46 @@ class Link extends EventEmitter {
 
     }
 
+    prove() {
+
+        // create data to sign
+        const signedData = Buffer.concat([
+            this.hash,
+            this.publicKeyBytes,
+            this.signaturePublicKeyBytes,
+        ]);
+
+        // sign data
+        const signature = this.destination.identity.sign(signedData);
+
+        // create proof data to send in packet
+        const proofData = Buffer.concat([
+            signature,
+            this.publicKeyBytes,
+        ]);
+
+        // create data packet
+        const packet = new Packet();
+        // packet.hops = 0; // remote side checks expected hops and silently drops the packet if it doesn't match
+        packet.headerType = Packet.HEADER_1;
+        packet.packetType = Packet.PROOF;
+        packet.transportType = Transport.BROADCAST;
+        packet.context = Packet.LRPROOF;
+        packet.contextFlag = Packet.FLAG_UNSET;
+        packet.destination = this;
+        packet.destinationHash = this.hash;
+        packet.destinationType = Destination.LINK;
+        packet.data = proofData;
+
+        // pack packet
+        const raw = packet.pack();
+
+        // fixme only send on relevant interface
+        // send packet to all interfaces
+        this.destination.rns.sendData(raw);
+
+    }
+
     encrypt(data) {
         const fernet = new Fernet(this.derivedKey);
         return fernet.encrypt(data);
@@ -250,18 +352,55 @@ class Link extends EventEmitter {
 
     onPacket(packet) {
 
-        // decrypt packet data
-        const plaintext = this.decrypt(packet.data);
-
         // set link on packet so prove will have access to it
         packet.destination = this;
         packet.link = this;
 
-        // fire event
-        this.emit("packet", {
-            packet: packet,
-            data: plaintext,
-        });
+        // handle packet data for link
+        if(packet.context === Packet.NONE) {
+
+            // decrypt packet data
+            const plaintext = this.decrypt(packet.data);
+
+            // fire event
+            this.emit("packet", {
+                packet: packet,
+                data: plaintext,
+            });
+
+        }
+
+        // handle link request rtt
+        else if(packet.context === Packet.LRRTT){
+            if(!this.initiator){
+                this.onLinkRequestRtt(packet);
+            }
+        }
+
+    }
+
+    onLinkRequestRtt(packet) {
+
+        // measure round trip time
+        this.measuredRtt = Date.now() - this.requestTime;
+
+        // decrypt rtt data from packet
+        const plaintext = this.decrypt(packet.data);
+        if(!plaintext){
+            return;
+        }
+
+        // unpack data
+        const rtt = unmsgpack(plaintext);
+
+        // update link rtt with the slowest of the two rtt values
+        this.rtt = Math.max(this.measuredRtt, rtt);
+
+        // activate link
+        this.destination.rns.activateLink(this);
+
+        // fire link established callback
+        this.emit("established");
 
     }
 
