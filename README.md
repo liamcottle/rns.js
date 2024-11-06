@@ -60,6 +60,7 @@ There's a few scripts in the [examples](./examples) folder for reference on what
 ## TODO
 
 - [ ] Make it work in web browsers by not using NodeJS specific APIs
+- [ ] Implement websocket client to connect via web browsers
 - [ ] Tidy up logic for sending packets and packet types
 - [ ] Implement Link heartbeat packets
 - [ ] Validate LXMF message signatures
