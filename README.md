@@ -59,6 +59,7 @@ There's a few scripts in the [examples](./examples) folder for reference on what
 
 ## TODO
 
+- [ ] Make it work in web browsers by not using NodeJS specific APIs
 - [ ] Tidy up logic for sending packets and packet types
 - [ ] Implement Link heartbeat packets
 - [ ] Validate LXMF message signatures
