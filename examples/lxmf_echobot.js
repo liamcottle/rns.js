@@ -3,6 +3,7 @@ import {
     Destination,
     Identity,
     TCPClientInterface,
+    WebsocketClientInterface,
     LXMessage,
     Packet,
 } from "../src/reticulum.js";
@@ -12,6 +13,7 @@ const rns = new Reticulum();
 
 // add interfaces
 rns.addInterface(new TCPClientInterface("localhost", "127.0.0.1", 4242));
+// rns.addInterface(new WebsocketClientInterface("localhost", "127.0.0.1", 4243));
 
 // create test identity
 // const identity = Identity.create();
