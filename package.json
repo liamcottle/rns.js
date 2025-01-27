@@ -8,6 +8,7 @@
   "license": "MIT",
   "dependencies": {
     "@noble/curves": "^1.6.0",
-    "msgpackr": "^1.11.2"
+    "msgpackr": "^1.11.2",
+    "ws": "^8.18.0"
   }
 }
