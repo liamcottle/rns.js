@@ -19,6 +19,7 @@ You should probably look at the official reference stack written in Python;
 - [x] Connect with a `TCPClientInterface` to an existing RNS `TCPServerInterface`
 - [x] Connect with a `WebsocketClientInterface` to an existing [WebsocketServerInterface](https://github.com/liamcottle/reticulum-meshchat/blob/e6ff5097c07fe09e90a392acb516f033b2a637de/src/backend/interfaces/WebsocketServerInterface.py)
 - [x] Can be used in a web browser, see the [web client example](./web)
+- [x] Can be used in NodeJS, see the [simple example](#simple-example) below.
 - [x] Listen for incoming announces
 - [x] Register a Destination
 - [x] Listen for inbound packets to a Destination
