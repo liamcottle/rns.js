@@ -13,7 +13,7 @@ const rns = new Reticulum();
 
 // add interfaces
 rns.addInterface(new TCPClientInterface("localhost", "127.0.0.1", 4242));
-// rns.addInterface(new WebsocketClientInterface("localhost", "127.0.0.1", 4243));
+// rns.addInterface(new WebsocketClientInterface("Liam's Websocket Server", "wss://rns-wss.liamcottle.net"));
 
 // create test identity
 // const identity = Identity.create();

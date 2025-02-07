@@ -1,5 +1,6 @@
 import Packet from "../packet.js";
 import Interface from "./interface.js";
+import Runtime from "../utils/runtime.js";
 
 class WebsocketClientInterface extends Interface {
 
@@ -9,6 +10,14 @@ class WebsocketClientInterface extends Interface {
     }
 
     connect() {
+        if(Runtime.isBrowser()){
+            this.connectInBrowser();
+        } else {
+            this.connectInNodeJs();
+        }
+    }
+
+    connectInBrowser() {
 
         // connect to websocket
         this.websocket = new WebSocket(this.url);
@@ -31,6 +40,36 @@ class WebsocketClientInterface extends Interface {
 
         // handle socket close
         this.websocket.addEventListener('close', (error) => {
+            this.onSocketClose(error);
+        });
+
+    }
+
+    async connectInNodeJs() {
+
+        // note: ws module is only available in NodeJS, browsers should use connectInBrowser()
+        const { WebSocket } = await import("ws");
+
+        // connect to websocket
+        this.websocket = new WebSocket(this.url);
+
+        // connect to server
+        this.websocket.on("open", () => {
+            console.log(`Connected to: ${this.name} [${this.url}]`);
+        });
+
+        // handle received data
+        this.websocket.on('message', async (data) => {
+            this.onDataReceived(data);
+        });
+
+        // handle errors
+        this.websocket.on('error', (error) => {
+            this.onSocketError(error);
+        });
+
+        // handle socket close
+        this.websocket.on('close', (error) => {
             this.onSocketClose(error);
         });
 
