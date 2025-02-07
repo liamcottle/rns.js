@@ -3,21 +3,19 @@ import Interface from "./interface.js";
 
 class WebsocketClientInterface extends Interface {
 
-    constructor(name, host, port = 443, type = "wss") {
+    constructor(name, url) {
         super(name);
-        this.host = host;
-        this.port = port;
-        this.type = type;
+        this.url = url;
     }
 
     connect() {
 
         // connect to websocket
-        this.websocket = new WebSocket(`${this.type}://${this.host}:${this.port}`);
+        this.websocket = new WebSocket(this.url);
 
         // connect to server
         this.websocket.addEventListener("open", () => {
-            console.log(`Connected to: ${this.name} [${this.type}://${this.host}:${this.port}]`);
+            console.log(`Connected to: ${this.name} [${this.url}]`);
         });
 
         // handle received data
