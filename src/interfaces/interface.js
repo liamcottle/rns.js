@@ -16,6 +16,15 @@ class Interface {
         return Cryptography.sha256(this.name);
     }
 
+    /**
+     * Send data to from this interface.
+     * This method should be implemented by subclasses.
+     * @param data the data to send
+     */
+    sendData(data) {
+        throw new Error("sendData should be implemented by Interface subclasses!");
+    }
+
 }
 
 export default Interface;
