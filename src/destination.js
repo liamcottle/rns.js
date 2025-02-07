@@ -82,6 +82,11 @@ class Destination extends EventEmitter {
 
     }
 
+    static hashFromNameAndIdentity(fullName, identity) {
+        const [ appName, ...aspects ] = fullName.split(".");
+        return Destination.hash(identity, appName, ...aspects);
+    }
+
     /**
      * Encrypts data for this Destination.
      * @param data the data to encrypt

@@ -6,6 +6,7 @@ import Link from "./link.js";
 import Packet from "./packet.js";
 // import TCPClientInterface from "./interfaces/tcp_client_interface.js";
 import WebsocketClientInterface from "./interfaces/websocket_client_interface.js";
+import LXMF from "./lxmf/lxmf.js";
 import LXMessage from "./lxmf/lxmf_message.js";
 
 /**
@@ -20,6 +21,7 @@ class Reticulum extends EventEmitter {
         this.interfaces = [];
         this.destinations = [];
         this.links = []; // a list of known links in any state
+        this.announceHandlers = [];
     }
 
     /**
@@ -113,12 +115,40 @@ class Reticulum extends EventEmitter {
         return this.destinations.find((destination) => destination.hash.equals(destinationHash) && destination.direction === Destination.IN) != null;
     }
 
+    registerAnnounceHandler(aspect, callback) {
+        this.announceHandlers.push({
+            aspect: aspect,
+            callback: callback,
+        });
+    }
+
     /**
      * Called internally when an Announce is received.
-     * @param announce
+     * @param data
      */
-    onAnnounceReceived(announce) {
-        this.emit("announce", announce);
+    onAnnounceReceived(data) {
+
+        // emit announce event
+        this.emit("announce", data);
+
+        // fire announce handlers
+        for(const announceHandler of this.announceHandlers){
+
+            // compute hashes
+            const actualDestinationHash = data.announce.destinationHash.toString("hex");
+            const handlerExpectedDestinationHash = Destination.hashFromNameAndIdentity(announceHandler.aspect, data.announce.identity).toString("hex");
+
+            // fire announce handler callback if hashes match
+            if(actualDestinationHash === handlerExpectedDestinationHash){
+                try {
+                    announceHandler.callback(data);
+                } catch(e) {
+                    console.log("error running announce handler", e);
+                }
+            }
+
+        }
+
     }
 
     /**
@@ -247,5 +277,6 @@ export {
     Packet,
     // TCPClientInterface,
     WebsocketClientInterface,
+    LXMF,
     LXMessage,
 };
