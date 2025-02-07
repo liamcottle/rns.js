@@ -1,4 +1,3 @@
-import { Socket } from "net";
 import HDLC from "../framing/hdlc.js";
 import KISS from "../framing/kiss.js";
 import Packet from "../packet.js";
@@ -13,7 +12,10 @@ class TCPClientInterface extends Interface {
         this.kissFraming = kissFraming;
     }
 
-    connect() {
+    async connect() {
+
+        // note: net module is only available in NodeJS, you shouldn't use TCPClientInterface from a web browser
+        const { Socket } = await import("net");
 
         // create new socket
         this.socket = new Socket();
