@@ -1,5 +1,5 @@
-import Cryptography from "./cryptography.js";
-import MsgPack from "./msgpack.js";
+import Cryptography from "../cryptography.js";
+import MsgPack from "../msgpack.js";
 
 class LXMessage {
 

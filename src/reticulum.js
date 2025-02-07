@@ -6,7 +6,7 @@ import Link from "./link.js";
 import Packet from "./packet.js";
 // import TCPClientInterface from "./interfaces/tcp_client_interface.js";
 import WebsocketClientInterface from "./interfaces/websocket_client_interface.js";
-import LXMessage from "./lxmf_message.js";
+import LXMessage from "./lxmf/lxmf_message.js";
 
 /**
  * Events emitted by Reticulum
