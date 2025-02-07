@@ -4,7 +4,7 @@ import Destination from "./destination.js";
 import Identity from "./identity.js";
 import Link from "./link.js";
 import Packet from "./packet.js";
-import TCPClientInterface from "./interfaces/tcp_client_interface.js";
+// import TCPClientInterface from "./interfaces/tcp_client_interface.js";
 import WebsocketClientInterface from "./interfaces/websocket_client_interface.js";
 import LXMessage from "./lxmf_message.js";
 
@@ -245,7 +245,7 @@ export {
     Identity,
     Link,
     Packet,
-    TCPClientInterface,
+    // TCPClientInterface,
     WebsocketClientInterface,
     LXMessage,
 };
