@@ -1,38 +1,38 @@
-import { WebSocket } from "ws";
 import Packet from "../packet.js";
 import Interface from "./interface.js";
 
 class WebsocketClientInterface extends Interface {
 
-    constructor(name, host, port) {
+    constructor(name, host, port = 443, type = "wss") {
         super(name);
         this.host = host;
         this.port = port;
+        this.type = type;
     }
 
     connect() {
 
         // connect to websocket
-        // fixme: implement support for wss:// so it can work in web browsers
-        this.websocket = new WebSocket(`ws://${this.host}:${this.port}`);
+        this.websocket = new WebSocket(`${this.type}://${this.host}:${this.port}`);
 
         // connect to server
-        this.websocket.on("open", () => {
-            console.log(`Connected to: ${this.name} [${this.host}:${this.port}]`);
+        this.websocket.addEventListener("open", () => {
+            console.log(`Connected to: ${this.name} [${this.type}://${this.host}:${this.port}]`);
         });
 
         // handle received data
-        this.websocket.on('message', (data) => {
-            this.onDataReceived(data);
+        this.websocket.addEventListener('message', async (message) => {
+            const arrayBuffer = await message.data.arrayBuffer();
+            this.onDataReceived(Buffer.from(arrayBuffer));
         });
 
         // handle errors
-        this.websocket.on('error', (error) => {
+        this.websocket.addEventListener('error', (error) => {
             this.onSocketError(error);
         });
 
         // handle socket close
-        this.websocket.on('close', (error) => {
+        this.websocket.addEventListener('close', (error) => {
             this.onSocketClose(error);
         });
 
