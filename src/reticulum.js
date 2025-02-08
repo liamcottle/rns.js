@@ -158,6 +158,9 @@ class Reticulum extends EventEmitter {
      */
     onPacketReceived(packet, receivingInterface) {
 
+        // increase hop count
+        packet.hops++;
+
         // set receiving interface on the packet
         packet.receivingInterface = receivingInterface;
 
@@ -203,9 +206,6 @@ class Reticulum extends EventEmitter {
             //     Identity._rememberRatchet(destinationHash, ratchet);
             // }
             //
-
-            // increase hop count
-            packet.hops++;
 
             // pass announce to rns
             this.onAnnounceReceived({
