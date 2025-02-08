@@ -260,8 +260,9 @@ class Destination extends EventEmitter {
     /**
      * Send a data packet to this Destination.
      * @param data
+     * @param viaTransportId
      */
-    send(data) {
+    send(data, viaTransportId = null) {
 
         // create data packet
         const packet = new Packet();
@@ -275,11 +276,12 @@ class Destination extends EventEmitter {
         packet.destinationType = this.type;
         packet.data = data;
 
-        // todo remove this
-        // // force using a transport node
-        // packet.headerType = Packet.HEADER_2;
-        // packet.transportType = Transport.TRANSPORT;
-        // packet.transportId = Buffer.from("25ffd99be40b112a3a11294badae6d8f", "hex"); // Windows PC MeshChat
+        // packet should be sent via a transport node
+        if(viaTransportId){
+            packet.headerType = Packet.HEADER_2;
+            packet.transportType = Transport.TRANSPORT;
+            packet.transportId = viaTransportId; // Buffer.from("25ffd99be40b112a3a11294badae6d8f", "hex"); // Windows PC MeshChat
+        }
 
         // pack packet
         const raw = packet.pack();

@@ -16,7 +16,7 @@
                         <{{ lxmfPeer.announce.destinationHash.toString("hex") }}>
                     </div>
                     <div class="flex space-x-1 text-sm text-gray-500">
-                        <a @click="sendMessage(lxmfPeer.announce.identity)" href="javascript:void(0);" class="text-blue-500 underline">Send Message</a>
+                        <a @click="sendMessage(lxmfPeer)" href="javascript:void(0);" class="text-blue-500 underline">Send Message</a>
                         <span>•</span>
                         <a @click="generateEncryptedQrMessage(lxmfPeer.announce.identity)" href="javascript:void(0);" class="text-blue-500 underline">Generate QR Message</a>
                     </div>
@@ -74,7 +74,7 @@ export default {
 
     },
     methods: {
-        sendMessage(recipientIdentity) {
+        sendMessage(lxmfPeer) {
 
             // ask user for message
             const message = prompt("Enter message");
@@ -83,7 +83,7 @@ export default {
             }
 
             // create recipient destination
-            const recipientDestination = this.rns.registerDestination(recipientIdentity, Destination.OUT, Destination.SINGLE, "lxmf", "delivery");
+            const recipientDestination = this.rns.registerDestination(lxmfPeer.announce.identity, Destination.OUT, Destination.SINGLE, "lxmf", "delivery");
 
             // create lxmf message
             const replyLxmfMessage = new LXMessage();
@@ -95,7 +95,7 @@ export default {
 
             // send it
             const packed = replyLxmfMessage.pack(this.identity);
-            recipientDestination.send(packed);
+            recipientDestination.send(packed, lxmfPeer.announce.transportId);
 
         },
         generateEncryptedQrMessage(recipientIdentity) {
