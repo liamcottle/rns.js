@@ -204,6 +204,9 @@ class Reticulum extends EventEmitter {
             // }
             //
 
+            // increase hop count
+            packet.hops++;
+
             // pass announce to rns
             this.onAnnounceReceived({
                 announce: announce,
