@@ -97,14 +97,46 @@ class LXMessage {
         const signature = identity.sign(signedPart);
 
         // packed
-        const packed = Buffer.concat([
+        return Buffer.concat([
             opportunistic ? Buffer.alloc(0) : this.destinationHash, // opportunistic lxmf messages dont send destination in packed data
             this.sourceHash,
             signature,
             packedPayload,
         ]);
 
-        return packed;
+    }
+
+    /**
+     * Packs the LXMessage to an encrypted lxm:// uri that can be ingested by the destination.
+     * The lxm uri could be encoded as a QR code and scanned by Sideband.
+     * @param senderIdentity the identity sending this message, which is used to sign it
+     * @param destinationIdentity the identity this message is being sent to, which is used to encrypt it
+     * @returns {string} an lxm:// uri with the encrypted message data in url safe base64
+     */
+    toLxmUri(senderIdentity, destinationIdentity) {
+
+        // pack this lxmf message
+        const packed = this.pack(senderIdentity, false);
+        const destinationHash = packed.slice(0, 16);
+        const packedWithoutDestinationHash = packed.slice(16);
+
+        // encrypt packed data: sourceHash + signature + packedPayload
+        const encryptedData = destinationIdentity.encrypt(packedWithoutDestinationHash);
+
+        // prepare data that will be base64 encoded
+        const data = Buffer.concat([
+            destinationHash,
+            encryptedData,
+        ]);
+
+        // convert raw data buffer to url safe base64
+        const base64EncodedBuffer = data.toString("base64")
+            .replace(/\+/g, '-') // convert '+' to '-'
+            .replace(/\//g, '_') // convert '/' to '_'
+            .replace(/=+$/, ''); // remove trailing '='
+
+        // format as lxm:// uri
+        return `lxm://${base64EncodedBuffer}`;
 
     }
 

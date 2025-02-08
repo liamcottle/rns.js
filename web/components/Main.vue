@@ -15,6 +15,9 @@
                     <div class="text-sm text-gray-500">
                         <{{ lxmfPeer.announce.destinationHash.toString("hex") }}>
                     </div>
+                    <div class="text-sm text-gray-500">
+                        <a @click="generateEncryptedQrMessage(lxmfPeer.announce.identity)" href="javascript:void(0);" class="text-blue-500 underline">Generate Encrypted QR Message</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -24,13 +27,15 @@
 
 
 <script>
-import {LXMF, Reticulum, WebsocketClientInterface} from "@liamcottle/rns.js";
+import {Destination, Identity, LXMessage, LXMF, Reticulum, WebsocketClientInterface} from "@liamcottle/rns.js";
 
 export default {
     name: 'Main',
     data() {
         return {
             rns: null,
+            identity: null,
+            lxmfDestination: null,
             lxmfPeers: {},
         };
     },
@@ -41,6 +46,13 @@ export default {
 
         // connect to websocket server
         this.rns.addInterface(new WebsocketClientInterface("Liam's Websocket Server", "wss://rns-wss.liamcottle.net"));
+
+        // create test identity
+        // this.identity = Identity.create();
+        this.identity = Identity.fromPrivateKey(Buffer.from("9339cfce1fc75d4db4697cada620bb229de8a2164287c9302dbce840f38af39452f63722ef745fcef7bb3f90984b80c43a77ad1ff11127b88035b4ae4e670eaa", "hex"));
+
+        // create inbound lxmf destination
+        this.lxmfDestination = this.rns.registerDestination(this.identity, Destination.IN, Destination.SINGLE, "lxmf", "delivery");
 
         // listen for all announces
         this.rns.on("announce", (data) => {
@@ -58,6 +70,35 @@ export default {
             }
         });
 
+    },
+    methods: {
+        generateEncryptedQrMessage(recipientIdentity) {
+
+            // ask user for message
+            const message = prompt("Enter message");
+            if(!message){
+                return;
+            }
+
+            // create recipient destination
+            const recipientDestination = this.rns.registerDestination(recipientIdentity, Destination.OUT, Destination.SINGLE, "lxmf", "delivery");
+
+            // create lxmf message
+            const replyLxmfMessage = new LXMessage();
+            replyLxmfMessage.sourceHash = this.lxmfDestination.hash;
+            replyLxmfMessage.destinationHash = recipientDestination.hash;
+            replyLxmfMessage.title = "";
+            replyLxmfMessage.content = message;
+            replyLxmfMessage.fields = new Map();
+
+            // convert to lxm:// uri
+            const lxmUri = replyLxmfMessage.toLxmUri(this.identity, recipientIdentity);
+
+            // open qr code in new tab
+            const qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=" + encodeURIComponent(lxmUri);
+            window.open(qrCodeUrl, "_blank");
+
+        },
     },
 }
 </script>
