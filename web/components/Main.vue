@@ -93,7 +93,7 @@ export default {
     },
     methods: {
         requestPath(destinationHash) {
-            this.rns.requestPath(destinationHash);
+            this.rns.transport.requestPath(destinationHash);
         },
         sendMessage(lxmfPeer) {
 
