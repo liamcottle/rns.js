@@ -20,6 +20,11 @@ class LXMessage {
     static fromBytes(data) {
         try {
 
+            // no data provided, unable to parse
+            if(data == null || data.length === 0){
+                return null;
+            }
+
             // parse data
             const source = data.slice(0, 16);
             const signature = data.slice(16, 16 + 64);
