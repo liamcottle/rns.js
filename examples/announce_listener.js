@@ -10,5 +10,5 @@ rns.addInterface(new TCPClientInterface("V0ltTech", "v0lttech.com", 4242));
 
 // listen for announces
 rns.on("announce", (event) => {
-    console.log(`Announce Received: ${event.announce.destinationHash.toString("hex")} is now ${event.hops + 1} hops away on interface [${event.interface_name}]`);
+    console.log(`Announce Received: ${event.announce.destinationHash.toString("hex")} is now ${event.hops} hops away on interface [${event.interface_name}]`);
 });
