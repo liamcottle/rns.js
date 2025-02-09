@@ -7,10 +7,22 @@
             <div v-if="Object.keys(lxmfPeers).length === 0" class="text-sm text-gray-500">
                 No peers discovered yet. Listening for announces...
             </div>
+            <div>
+                <div class="flex space-x-1">
+                    <div class="my-auto">
+                        <input type="text" placeholder="Enter destination hash" v-model="destinationHash" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    </div>
+                    <div class="my-auto">
+                        <button @click="requestPath(destinationHash)" type="button" class="bg-green-500 hover:bg-green-400 focus-visible:outline-green-500 my-auto inline-flex items-center gap-x-1 rounded-md p-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+                            Request Path
+                        </button>
+                    </div>
+                </div>
+            </div>
             <div class="mt-2 space-y-2">
                 <div v-for="lxmfPeer of lxmfPeers" class="bg-white px-2 py-1 rounded shadow">
                     <div>
-                        <b>{{ lxmfPeer.display_name }}</b> is {{ lxmfPeer.hops }} hops away
+                        <b>{{ lxmfPeer.display_name }}</b> is {{ lxmfPeer.hops }} hops away <span v-if="lxmfPeer.announce.isPathResponse" class="text-purple-500">(From Path Request)</span>
                     </div>
                     <div class="text-sm text-gray-500">
                         <{{ lxmfPeer.announce.destinationHash.toString("hex") }}>
@@ -19,6 +31,8 @@
                         <a @click="sendMessage(lxmfPeer)" href="javascript:void(0);" class="text-blue-500 underline">Send Message</a>
                         <span>•</span>
                         <a @click="generateEncryptedQrMessage(lxmfPeer.announce.identity)" href="javascript:void(0);" class="text-blue-500 underline">Generate QR Message</a>
+                        <span>•</span>
+                        <a @click="requestPath(lxmfPeer.announce.destinationHash)" href="javascript:void(0);" class="text-blue-500 underline">Request Path</a>
                     </div>
                 </div>
             </div>
@@ -35,10 +49,14 @@ export default {
     name: 'Main',
     data() {
         return {
+
             rns: null,
             identity: null,
             lxmfDestination: null,
             lxmfPeers: {},
+
+            destinationHash: null,
+
         };
     },
     mounted() {
@@ -74,6 +92,9 @@ export default {
 
     },
     methods: {
+        requestPath(destinationHash) {
+            this.rns.requestPath(destinationHash);
+        },
         sendMessage(lxmfPeer) {
 
             // ask user for message

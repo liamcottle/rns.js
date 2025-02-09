@@ -73,6 +73,7 @@ class Announce {
             announce.destinationHash = packet.destinationHash;
             announce.identity = announcedIdentity;
             announce.appData = appData;
+            announce.isPathResponse = packet.context === Packet.PATH_RESPONSE;
             announce.transportId = packet.transportId; // fixme: temporarily saved on the announce for now
             return announce;
 

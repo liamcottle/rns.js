@@ -8,6 +8,8 @@ import TCPClientInterface from "./interfaces/tcp_client_interface.js";
 import WebsocketClientInterface from "./interfaces/websocket_client_interface.js";
 import LXMF from "./lxmf/lxmf.js";
 import LXMessage from "./lxmf/lxmf_message.js";
+import Cryptography from "./cryptography.js";
+import Transport from "./transport.js";
 
 /**
  * Events emitted by Reticulum
@@ -16,12 +18,16 @@ import LXMessage from "./lxmf/lxmf_message.js";
 class Reticulum extends EventEmitter {
 
     constructor() {
+
         super();
         this.shouldUseImplicitProof = true;
         this.interfaces = [];
         this.destinations = [];
         this.links = []; // a list of known links in any state
         this.announceHandlers = [];
+
+        this.transport = new Transport();
+
     }
 
     /**
@@ -267,6 +273,30 @@ class Reticulum extends EventEmitter {
             }
 
         }
+
+    }
+
+    requestPath(destinationHash) {
+
+        // if string provided, convert to bytes
+        if(typeof destinationHash === "string"){
+            destinationHash = Buffer.from(destinationHash, "hex");
+        }
+
+        // create a random tag
+        const requestTag = Cryptography.getRandomHash();
+
+        // prepare path request data
+        const pathRequestData = Buffer.concat([
+            destinationHash,
+            this.transport.identity.hash,
+            requestTag,
+        ]);
+
+        // send path request
+        // todo register destination once in transport class
+        const destination = this.registerDestination(null, Destination.OUT, Destination.PLAIN, "rnstransport", "path", "request");
+        destination.send(pathRequestData);
 
     }
 

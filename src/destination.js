@@ -16,7 +16,7 @@ class Destination extends EventEmitter {
     // // constants
     static SINGLE = 0x00;
     // static GROUP = 0x01;
-    // static PLAIN = 0x02;
+    static PLAIN = 0x02;
     static LINK = 0x03;
     // static DESTINATION_TYPES = [this.SINGLE, this.GROUP, this.PLAIN, this.LINK];
 
@@ -94,6 +94,11 @@ class Destination extends EventEmitter {
      */
     encrypt(data) {
 
+        // a plain destination does not encrypt its data
+        if(this.type === Destination.PLAIN){
+            return data;
+        }
+
         // handle single destination type with known identity
         if(this.type === Destination.SINGLE && this.identity != null){
             // todo ratchets
@@ -111,10 +116,10 @@ class Destination extends EventEmitter {
      */
     decrypt(data) {
 
-        // todo
-        // if(this.type === Destination.PLAIN){
-        //     return data;
-        // }
+        // a plain destination does not encrypt its data
+        if(this.type === Destination.PLAIN){
+            return data;
+        }
 
         // handle single destination type with known identity
         if(this.type === Destination.SINGLE && this.identity != null){

@@ -27,7 +27,7 @@ class Packet {
     // static CACHE_REQUEST  = 0x08; // Packet is a cache request
     // static REQUEST        = 0x09; // Packet is a request
     // static RESPONSE       = 0x0A; // Packet is a response to a request
-    // static PATH_RESPONSE  = 0x0B; // Packet is a response to a path request
+    static PATH_RESPONSE  = 0x0B; // Packet is a response to a path request
     // static COMMAND        = 0x0C; // Packet is a command
     // static COMMAND_STATUS = 0x0D; // Packet is a status of an executed command
     // static CHANNEL        = 0x0E; // Packet contains link channel data
