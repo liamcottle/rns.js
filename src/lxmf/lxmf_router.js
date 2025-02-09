@@ -17,6 +17,9 @@ class LXMRouter extends EventEmitter {
         // listen for incoming packets
         this.destination.on("packet", (event) => {
 
+            // prove that the packet was received
+            event.packet.prove();
+
             // parse and log lxmf message
             const receivedLxmfMessage = LXMessage.fromBytes(event.data);
             if(!receivedLxmfMessage){
@@ -25,9 +28,6 @@ class LXMRouter extends EventEmitter {
 
             // todo remove log, and mark the lxmessage object as being received opportunistically
             console.log("received opportunistic lxmf message", receivedLxmfMessage);
-
-            // prove that the packet was received
-            event.packet.prove();
 
             // fire callback
             this.emit("message", receivedLxmfMessage);
