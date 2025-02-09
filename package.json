@@ -1,6 +1,6 @@
 {
   "name": "@liamcottle/rns.js",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Javascript implementation of the Reticulum Network Stack",
   "main": "./src/reticulum.js",
   "type": "module",
