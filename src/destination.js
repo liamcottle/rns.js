@@ -281,6 +281,7 @@ class Destination extends EventEmitter {
         packet.destinationType = this.type;
         packet.data = data;
 
+        // fixme: remove viaTransportId, and send the packet to Transport class instead, which should find the path for us
         // packet should be sent via a transport node
         if(viaTransportId){
             packet.headerType = Packet.HEADER_2;
