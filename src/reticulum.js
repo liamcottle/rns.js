@@ -8,6 +8,7 @@ import TCPClientInterface from "./interfaces/tcp_client_interface.js";
 import WebsocketClientInterface from "./interfaces/websocket_client_interface.js";
 import LXMF from "./lxmf/lxmf.js";
 import LXMessage from "./lxmf/lxmf_message.js";
+import LXMRouter from "./lxmf/lxmf_router.js";
 import Transport from "./transport.js";
 
 /**
@@ -287,4 +288,5 @@ export {
     WebsocketClientInterface,
     LXMF,
     LXMessage,
+    LXMRouter,
 };

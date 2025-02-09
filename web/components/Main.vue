@@ -43,7 +43,15 @@
 
 
 <script>
-import {Destination, Identity, LXMessage, LXMF, Reticulum, WebsocketClientInterface} from "@liamcottle/rns.js";
+import {
+    Destination,
+    Identity,
+    LXMessage,
+    LXMF,
+    LXMRouter,
+    Reticulum,
+    WebsocketClientInterface
+} from "@liamcottle/rns.js";
 
 export default {
     name: 'Main',
@@ -52,7 +60,7 @@ export default {
 
             rns: null,
             identity: null,
-            lxmfDestination: null,
+            lxmfRouter: null,
             lxmfPeers: {},
 
             destinationHash: null,
@@ -71,8 +79,17 @@ export default {
         // this.identity = Identity.create();
         this.identity = Identity.fromPrivateKey(Buffer.from("9339cfce1fc75d4db4697cada620bb229de8a2164287c9302dbce840f38af39452f63722ef745fcef7bb3f90984b80c43a77ad1ff11127b88035b4ae4e670eaa", "hex"));
 
-        // create inbound lxmf destination
-        this.lxmfDestination = this.rns.registerDestination(this.identity, Destination.IN, Destination.SINGLE, "lxmf", "delivery");
+        // create lxmf router
+        this.lxmfRouter = new LXMRouter(this.rns, this.identity);
+        this.lxmfRouter.on("message", (lxmfMessage) => {
+            alert(lxmfMessage.content);
+        });
+
+        // wait a bit for websocket connection to be connected
+        // fixme: have a callback from rns when interfaces are ready?
+        setTimeout(() => {
+            this.lxmfRouter.announce("@liamcottle/rns.js");
+        }, 3000);
 
         // listen for all announces
         this.rns.on("announce", (data) => {
@@ -108,7 +125,7 @@ export default {
 
             // create lxmf message
             const replyLxmfMessage = new LXMessage();
-            replyLxmfMessage.sourceHash = this.lxmfDestination.hash;
+            replyLxmfMessage.sourceHash = this.lxmfRouter.destination.hash;
             replyLxmfMessage.destinationHash = recipientDestination.hash;
             replyLxmfMessage.title = "";
             replyLxmfMessage.content = message;
@@ -132,7 +149,7 @@ export default {
 
             // create lxmf message
             const replyLxmfMessage = new LXMessage();
-            replyLxmfMessage.sourceHash = this.lxmfDestination.hash;
+            replyLxmfMessage.sourceHash = this.lxmfRouter.destination.hash;
             replyLxmfMessage.destinationHash = recipientDestination.hash;
             replyLxmfMessage.title = "";
             replyLxmfMessage.content = message;
