@@ -270,7 +270,7 @@ class Identity {
         packet.context = Packet.NONE;
         packet.contextFlag = Packet.FLAG_UNSET;
         packet.destination = null;
-        packet.destinationHash = packetToProve.packetHash.slice(Constants.TRUNCATED_HASHLENGTH_IN_BYTES);
+        packet.destinationHash = packetToProve.packetHash.slice(0, Constants.TRUNCATED_HASHLENGTH_IN_BYTES);
         packet.destinationType = Destination.SINGLE;
         packet.data = proofData;
 
