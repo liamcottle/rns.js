@@ -54,7 +54,7 @@ import {
 } from "@liamcottle/rns.js";
 
 export default {
-    name: 'Main',
+    name: 'MainPage',
     data() {
         return {
 
